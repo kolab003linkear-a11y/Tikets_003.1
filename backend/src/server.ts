@@ -82,6 +82,41 @@ const showtimeSchema = z.object({
   availableSeats: z.coerce.number().int().min(0).optional(),
 });
 
+const stadiumSectorSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  code: z.string().trim().min(1).max(12).transform((value) => value.toUpperCase()),
+  capacity: z.coerce.number().int().min(1).max(100000),
+  price: z.coerce.number().positive().max(10000),
+  seatLayout: z.object({
+    rows: z.array(z.string().trim().min(1).max(3)).min(1).max(100),
+    columns: z.coerce.number().int().min(1).max(100),
+  }),
+});
+
+const stadiumSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  city: z.string().trim().min(1).max(80),
+  capacity: z.coerce.number().int().min(1).max(100000),
+  seatLayout: z.object({
+    rows: z.array(z.string().trim().min(1).max(3)).min(1).max(100),
+    columns: z.coerce.number().int().min(1).max(100),
+  }),
+  sectors: z.array(stadiumSectorSchema).min(1).max(100),
+});
+
+const matchSchema = z.object({
+  stadiumId: z.string().min(1),
+  homeTeam: z.string().trim().min(1).max(80),
+  awayTeam: z.string().trim().min(1).max(80),
+  startTime: z.coerce.date(),
+  status: z.enum(['SCHEDULED', 'LIVE', 'FINISHED', 'CANCELLED']).optional(),
+});
+
+const stadiumTicketSchema = z.object({
+  sectorId: z.string().min(1),
+  seatNumber: z.string().trim().min(1).max(12),
+});
+
 class AppError extends Error {
   statusCode: number;
 
@@ -370,6 +405,115 @@ app.patch('/api/admin/showtimes/:showtimeId', authMiddleware, async (req, res, n
     if (availableSeats > room.capacity) throw new AppError('Availability cannot exceed room capacity.', 400);
     const showtime = await prisma.showtime.update({ where: { id: req.params.showtimeId }, data: { ...payload, availableSeats } });
     return res.json({ showtime });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/api/stadiums', async (_req, res, next) => {
+  try {
+    const stadiums = await prisma.stadium.findMany({ include: { sectors: true }, orderBy: { name: 'asc' } });
+    return res.json({ stadiums });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/api/matches', async (_req, res, next) => {
+  try {
+    const matches = await prisma.match.findMany({
+      where: { status: { in: ['SCHEDULED', 'LIVE'] } },
+      include: { stadium: { include: { sectors: true } }, _count: { select: { tickets: true } } },
+      orderBy: { startTime: 'asc' },
+    });
+    return res.json({ matches });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/api/admin/stadiums', authMiddleware, async (req, res, next) => {
+  try {
+    const authenticatedUser = (req as Request & { user: { role: UserRole } }).user;
+    if (authenticatedUser.role !== UserRole.ADMIN) throw new AppError('Only administrators can manage stadiums.', 403);
+    const stadiums = await prisma.stadium.findMany({ include: { sectors: true, _count: { select: { matches: true } } }, orderBy: { name: 'asc' } });
+    return res.json({ stadiums });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/admin/stadiums', authMiddleware, async (req, res, next) => {
+  try {
+    const authenticatedUser = (req as Request & { user: { role: UserRole } }).user;
+    if (authenticatedUser.role !== UserRole.ADMIN) throw new AppError('Only administrators can manage stadiums.', 403);
+    const payload = stadiumSchema.parse(req.body);
+    const seatCount = payload.seatLayout.rows.length * payload.seatLayout.columns;
+    const sectorCapacity = payload.sectors.reduce((total, sector) => total + sector.capacity, 0);
+    if (seatCount < payload.capacity || sectorCapacity !== payload.capacity) throw new AppError('Stadium capacity and sectors must match the seat layout.', 400);
+    const stadium = await prisma.stadium.create({ data: { name: payload.name, city: payload.city, capacity: payload.capacity, seatLayout: payload.seatLayout, sectors: { create: payload.sectors } }, include: { sectors: true } });
+    return res.status(201).json({ stadium });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/api/admin/matches', authMiddleware, async (req, res, next) => {
+  try {
+    const authenticatedUser = (req as Request & { user: { role: UserRole } }).user;
+    if (authenticatedUser.role !== UserRole.ADMIN) throw new AppError('Only administrators can manage matches.', 403);
+    const matches = await prisma.match.findMany({ include: { stadium: true, _count: { select: { tickets: true } } }, orderBy: { startTime: 'asc' } });
+    return res.json({ matches });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/admin/matches', authMiddleware, async (req, res, next) => {
+  try {
+    const authenticatedUser = (req as Request & { user: { role: UserRole } }).user;
+    if (authenticatedUser.role !== UserRole.ADMIN) throw new AppError('Only administrators can manage matches.', 403);
+    const payload = matchSchema.parse(req.body);
+    if (payload.homeTeam.toLowerCase() === payload.awayTeam.toLowerCase()) throw new AppError('Home and away teams must be different.', 400);
+    const stadium = await prisma.stadium.findUnique({ where: { id: payload.stadiumId }, select: { id: true } });
+    if (!stadium) throw new AppError('Stadium not found.', 404);
+    const match = await prisma.match.create({ data: { ...payload, status: payload.status ?? 'SCHEDULED' }, include: { stadium: true } });
+    return res.status(201).json({ match });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.patch('/api/admin/matches/:matchId', authMiddleware, async (req, res, next) => {
+  try {
+    const authenticatedUser = (req as Request & { user: { role: UserRole } }).user;
+    if (authenticatedUser.role !== UserRole.ADMIN) throw new AppError('Only administrators can manage matches.', 403);
+    const payload = matchSchema.parse(req.body);
+    const match = await prisma.match.update({ where: { id: req.params.matchId }, data: { ...payload, status: payload.status ?? 'SCHEDULED' }, include: { stadium: true } });
+    return res.json({ match });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/matches/:matchId/tickets', authMiddleware, async (req, res, next) => {
+  try {
+    const payload = stadiumTicketSchema.parse(req.body);
+    const authenticatedUser = (req as Request & { user: { sub: string } }).user;
+    const account = await prisma.user.findUnique({ where: { id: authenticatedUser.sub }, select: { id: true } });
+    if (!account) throw new AppError('Your session is no longer valid. Please sign in again.', 401);
+    const match = await prisma.match.findUnique({ where: { id: req.params.matchId }, include: { stadium: true } });
+    if (!match || match.status === 'CANCELLED' || match.status === 'FINISHED') throw new AppError('Match is not available for ticket sales.', 409);
+    const sector = await prisma.stadiumSector.findUnique({ where: { id: payload.sectorId } });
+    if (!sector || sector.stadiumId !== match.stadiumId) throw new AppError('Sector does not belong to this stadium.', 400);
+    const layout = sector.seatLayout as { rows?: unknown; columns?: unknown };
+    const rows = Array.isArray(layout.rows) ? layout.rows.filter((row): row is string => typeof row === 'string') : [];
+    const columns = typeof layout.columns === 'number' ? layout.columns : 0;
+    const validSeats = new Set(rows.flatMap((row) => Array.from({ length: columns }, (_, index) => `${row}${index + 1}`)));
+    if (!validSeats.has(payload.seatNumber.toUpperCase())) throw new AppError('Seat is outside the selected sector.', 400);
+    const qrCodeHash = createHash('sha256').update(`${req.params.matchId}:${payload.sectorId}:${payload.seatNumber}:${Date.now()}:${Math.random()}`).digest('hex');
+    const ticket = await prisma.stadiumTicket.create({ data: { matchId: req.params.matchId, sectorId: payload.sectorId, userId: account.id, seatNumber: payload.seatNumber.toUpperCase(), qrCodeHash }, include: { match: { include: { stadium: true } }, sector: true } });
+    return res.status(201).json({ ticket: { id: ticket.id, qrPayload: `stadiumsafe:v1:${ticket.id}:${ticket.qrCodeHash}`, status: ticket.status, seatNumber: ticket.seatNumber, sector: ticket.sector.name, match: ticket.match } });
   } catch (error) {
     next(error);
   }

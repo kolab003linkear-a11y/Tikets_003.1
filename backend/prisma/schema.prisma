@@ -36,6 +36,19 @@ enum TicketStatus {
   EXPIRED
 }
 
+enum MatchStatus {
+  SCHEDULED
+  LIVE
+  FINISHED
+  CANCELLED
+}
+
+enum StadiumTicketStatus {
+  VALID
+  USED
+  EXPIRED
+}
+
 model User {
   id            String        @id @default(cuid())
   email         String        @unique
@@ -43,6 +56,7 @@ model User {
   role          UserRole      @default(CLIENT)
   createdAt     DateTime      @default(now()) @map("created_at")
   reservations  Reservation[]
+  stadiumTickets StadiumTicket[]
 
   @@map("users")
 }
@@ -122,4 +136,68 @@ model Ticket {
   @@index([reservationId])
   @@index([status])
   @@map("tickets")
+}
+
+model Stadium {
+  id          String          @id @default(cuid())
+  name        String
+  city        String
+  capacity    Int
+  seatLayout  Json            @map("seat_layout")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+  sectors     StadiumSector[]
+  matches     Match[]
+
+  @@map("stadiums")
+}
+
+model StadiumSector {
+  id          String          @id @default(cuid())
+  stadiumId   String          @map("stadium_id")
+  name        String
+  code        String
+  capacity    Int
+  price       Decimal         @db.Decimal(10, 2)
+  seatLayout  Json            @map("seat_layout")
+  stadium     Stadium         @relation(fields: [stadiumId], references: [id], onDelete: Cascade)
+  tickets     StadiumTicket[]
+
+  @@unique([stadiumId, code])
+  @@map("stadium_sectors")
+}
+
+model Match {
+  id          String          @id @default(cuid())
+  stadiumId   String          @map("stadium_id")
+  homeTeam    String          @map("home_team")
+  awayTeam    String          @map("away_team")
+  startTime   DateTime        @map("start_time")
+  status      MatchStatus     @default(SCHEDULED)
+  stadium     Stadium         @relation(fields: [stadiumId], references: [id], onDelete: Cascade)
+  tickets     StadiumTicket[]
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  @@unique([stadiumId, startTime])
+  @@index([startTime, status])
+  @@map("matches")
+}
+
+model StadiumTicket {
+  id          String              @id @default(cuid())
+  matchId     String              @map("match_id")
+  sectorId    String              @map("sector_id")
+  userId      String              @map("user_id")
+  seatNumber  String              @map("seat_number")
+  qrCodeHash  String              @unique @map("qr_code_hash")
+  status      StadiumTicketStatus @default(VALID)
+  usedAt      DateTime?           @map("used_at")
+  createdAt   DateTime            @default(now()) @map("created_at")
+  match       Match               @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  sector      StadiumSector       @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, sectorId, seatNumber])
+  @@index([matchId, status])
+  @@map("stadium_tickets")
 }

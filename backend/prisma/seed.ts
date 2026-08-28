@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole, MovieCategory, EventStatus } from '@prisma/client';
+import { PrismaClient, UserRole, MovieCategory, EventStatus, MatchStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -75,6 +75,25 @@ async function main() {
     },
   });
 
+  const stadium = await prisma.stadium.upsert({
+    where: { id: 'stadium-1' },
+    update: {},
+    create: {
+      id: 'stadium-1',
+      name: 'Estadio Central',
+      city: 'Madrid',
+      capacity: 100,
+      seatLayout: { rows: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'], columns: 10 },
+      sectors: {
+        create: [
+          { name: 'Tribuna', code: 'TRIB', capacity: 50, price: 35, seatLayout: { rows: ['A', 'B', 'C', 'D', 'E'], columns: 10 } },
+          { name: 'Preferencia', code: 'PREF', capacity: 50, price: 20, seatLayout: { rows: ['F', 'G', 'H', 'I', 'J'], columns: 10 } },
+        ],
+      },
+    },
+    include: { sectors: true },
+  });
+
   const now = new Date();
 
   await prisma.showtime.upsert({
@@ -87,6 +106,19 @@ async function main() {
       startTime: new Date(now.getTime() + 1000 * 60 * 60 * 4),
       price: 16.5,
       availableSeats: 64,
+    },
+  });
+
+  await prisma.match.upsert({
+    where: { id: 'match-001' },
+    update: {},
+    create: {
+      id: 'match-001',
+      stadiumId: stadium.id,
+      homeTeam: 'Madrid FC',
+      awayTeam: 'Valencia Club',
+      startTime: new Date(now.getTime() + 1000 * 60 * 60 * 72),
+      status: MatchStatus.SCHEDULED,
     },
   });
 

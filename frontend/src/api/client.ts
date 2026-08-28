@@ -139,6 +139,29 @@ export type AdminShowtimeInput = {
   availableSeats?: number;
 };
 
+export type StadiumSector = {
+  id: string;
+  name: string;
+  code: string;
+  capacity: number;
+  price: number | string;
+  seatLayout: { rows: string[]; columns: number };
+};
+
+export type StadiumMatch = {
+  id: string;
+  homeTeam: string;
+  awayTeam: string;
+  startTime: string;
+  status: 'SCHEDULED' | 'LIVE' | 'FINISHED' | 'CANCELLED';
+  stadium: { id: string; name: string; city: string; capacity: number; sectors: StadiumSector[] };
+  _count?: { tickets: number };
+};
+
+export type StadiumTicketResponse = {
+  ticket: { id: string; qrPayload: string; status: 'VALID' | 'USED' | 'EXPIRED'; seatNumber: string; sector: string; match: StadiumMatch };
+};
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
@@ -159,6 +182,18 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function getCatalog() {
   return request<CatalogResponse>('/api/catalog');
+}
+
+export function getMatches() {
+  return request<{ matches: StadiumMatch[] }>('/api/matches');
+}
+
+export function createMatchTicket(token: string, matchId: string, sectorId: string, seatNumber: string) {
+  return request<StadiumTicketResponse>(`/api/matches/${matchId}/tickets`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ sectorId, seatNumber }),
+  });
 }
 
 export function login(email: string, password: string) {

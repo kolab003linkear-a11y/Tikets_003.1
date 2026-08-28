@@ -14,6 +14,7 @@ import AuthScreen from './src/screens/AuthScreen';
 import AdminScannerScreen from './src/screens/AdminScannerScreen';
 import AdminEventsScreen from './src/screens/AdminEventsScreen';
 import AdminScheduleScreen from './src/screens/AdminScheduleScreen';
+import StadiumScreen from './src/screens/StadiumScreen';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { colors, typography } from './src/theme';
 
@@ -66,6 +67,7 @@ function HomeTabs() {
             'Admin Scanner': 'scan-outline',
             'Admin Eventos': 'settings-outline',
             'Admin Salas': 'calendar-outline',
+            Estadios: 'football-outline',
           } as const;
 
           return <Ionicons name={iconMap[route.name as keyof typeof iconMap] ?? 'film-outline'} size={size} color={color} />;
@@ -73,6 +75,7 @@ function HomeTabs() {
       })}
     >
       <Tab.Screen name="Cartelera" component={HomeScreen} />
+      <Tab.Screen name="Estadios" component={StadiumScreen} />
       <Tab.Screen name="Mis Tickets" component={MyTicketsScreen} />
       <Tab.Screen name="Perfil" component={ProfileScreen} />
       {canUseAdminScanner && <Tab.Screen name="Admin Scanner" component={AdminScannerScreen} />}
