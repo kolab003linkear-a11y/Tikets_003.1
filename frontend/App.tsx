@@ -11,9 +11,7 @@ import TicketScreen from './src/screens/TicketScreen';
 import MyTicketsScreen from './src/screens/MyTicketsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import AuthScreen from './src/screens/AuthScreen';
-import AdminScannerScreen from './src/screens/AdminScannerScreen';
-import AdminEventsScreen from './src/screens/AdminEventsScreen';
-import AdminScheduleScreen from './src/screens/AdminScheduleScreen';
+import AdminHubScreen from './src/screens/AdminHubScreen';
 import StadiumScreen from './src/screens/StadiumScreen';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { colors, typography } from './src/theme';
@@ -42,8 +40,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 
 function HomeTabs() {
   const { user } = useAuth();
-  const canUseAdminScanner = user?.role === 'ADMIN' || user?.role === 'SCANNER';
-  const canManageEvents = user?.role === 'ADMIN';
+  const canUseAdmin = user?.role === 'ADMIN' || user?.role === 'SCANNER';
 
   return (
     <Tab.Navigator
@@ -63,10 +60,7 @@ function HomeTabs() {
           const iconMap = {
             Cartelera: 'film-outline',
             'Mis Tickets': 'ticket-outline',
-            Perfil: 'person-outline',
-            'Admin Scanner': 'scan-outline',
-            'Admin Eventos': 'settings-outline',
-            'Admin Salas': 'calendar-outline',
+            Admin: 'grid-outline',
             Estadios: 'football-outline',
           } as const;
 
@@ -77,10 +71,7 @@ function HomeTabs() {
       <Tab.Screen name="Cartelera" component={HomeScreen} />
       <Tab.Screen name="Estadios" component={StadiumScreen} />
       <Tab.Screen name="Mis Tickets" component={MyTicketsScreen} />
-      <Tab.Screen name="Perfil" component={ProfileScreen} />
-      {canUseAdminScanner && <Tab.Screen name="Admin Scanner" component={AdminScannerScreen} />}
-      {canManageEvents && <Tab.Screen name="Admin Eventos" component={AdminEventsScreen} />}
-      {canManageEvents && <Tab.Screen name="Admin Salas" component={AdminScheduleScreen} />}
+      {canUseAdmin && <Tab.Screen name="Admin" component={AdminHubScreen} />}
     </Tab.Navigator>
   );
 }
@@ -106,6 +97,7 @@ function AppContent() {
           <Stack.Screen name="SeatSelection" component={SeatSelectionScreen} />
           <Stack.Screen name="Checkout" component={CheckoutScreen} />
           <Stack.Screen name="Ticket" component={TicketScreen} />
+          <Stack.Screen name="Profile" component={ProfileScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </ErrorBoundary>

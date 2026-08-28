@@ -28,7 +28,7 @@ type AuthContextValue = {
   restoring: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
-  updateProfile: (email: string) => Promise<void>;
+  updateProfile: (profile: { email: string; fullName?: string; phone?: string }) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -71,9 +71,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await saveSession(response.token, response.user);
   };
 
-  const updateProfile = async (email: string) => {
+  const updateProfile = async (profile: { email: string; fullName?: string; phone?: string }) => {
     if (!token) throw new Error('Tu sesión expiró. Inicia sesión nuevamente.');
-    const response = await updateMe(token, email);
+    const response = await updateMe(token, profile);
     await setStoredValue(USER_KEY, JSON.stringify(response.user));
     setUser(response.user);
   };

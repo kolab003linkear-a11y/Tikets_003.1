@@ -1,4 +1,7 @@
-const API_BASE_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'http://192.168.100.8:4000').replace(/\/$/, '');
+import { Platform } from 'react-native';
+
+const defaultApiUrl = Platform.OS === 'web' ? 'http://localhost:4000' : 'http://192.168.100.8:4000';
+const API_BASE_URL = (process.env.EXPO_PUBLIC_API_URL ?? defaultApiUrl).replace(/\/$/, '');
 
 export type CatalogShowtime = {
   id: string;
@@ -34,6 +37,8 @@ export type CatalogResponse = {
 export type AuthUser = {
   id: string;
   email: string;
+  fullName: string | null;
+  phone: string | null;
   role: 'CLIENT' | 'ADMIN' | 'SCANNER';
   createdAt: string;
 };
@@ -146,6 +151,7 @@ export type StadiumSector = {
   capacity: number;
   price: number | string;
   seatLayout: { rows: string[]; columns: number };
+  occupiedSeats?: string[];
 };
 
 export type StadiumMatch = {
@@ -154,7 +160,7 @@ export type StadiumMatch = {
   awayTeam: string;
   startTime: string;
   status: 'SCHEDULED' | 'LIVE' | 'FINISHED' | 'CANCELLED';
-  stadium: { id: string; name: string; city: string; capacity: number; sectors: StadiumSector[] };
+  stadium: { id: string; name: string; city: string; capacity: number; imageUrl?: string | null; sectors: StadiumSector[] };
   _count?: { tickets: number };
 };
 
@@ -325,11 +331,11 @@ export function getMe(token: string) {
   });
 }
 
-export function updateMe(token: string, email: string) {
+export function updateMe(token: string, profile: { email: string; fullName?: string; phone?: string }) {
   return request<{ user: AuthUser }>('/api/me', {
     method: 'PATCH',
     headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify(profile),
   });
 }
 

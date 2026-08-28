@@ -177,6 +177,14 @@ test('creates and reuses a stadium ticket QR once', async () => {
     const ticket = await ticketResponse.json();
     assert.match(ticket.ticket.qrPayload, /^stadiumsafe:v1:/);
 
+    const myTicketsResponse = await request(baseUrl, '/api/tickets', { headers });
+    assert.equal(myTicketsResponse.status, 200);
+    const myTickets = await myTicketsResponse.json();
+    const savedStadiumTicket = myTickets.tickets.find((item) => item.id === ticket.ticket.id);
+    assert.ok(savedStadiumTicket, 'expected the stadium ticket in the user ticket list');
+    assert.equal(savedStadiumTicket.qrPayload, ticket.ticket.qrPayload);
+    assert.equal(savedStadiumTicket.event.title, `${match.homeTeam} vs ${match.awayTeam}`);
+
     const adminLoginResponse = await request(baseUrl, '/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email: 'admin@tikets.com', password: 'demo1234' }),
@@ -232,6 +240,25 @@ test('denies client access to administrative mutations', async () => {
       body: JSON.stringify({}),
     });
     assert.equal(adminResponse.status, 403);
+  } finally {
+    if (userId) await prisma.user.delete({ where: { id: userId } });
+  }
+});
+
+test('does not allow public registration to elevate the user role', async () => {
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+  const email = `role-${Date.now()}@example.com`;
+  let userId;
+
+  try {
+    const registerResponse = await request(baseUrl, '/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password: 'demo1234', role: 'ADMIN' }),
+    });
+    assert.equal(registerResponse.status, 201);
+    const registered = await registerResponse.json();
+    userId = registered.user.id;
+    assert.equal(registered.user.role, 'CLIENT');
   } finally {
     if (userId) await prisma.user.delete({ where: { id: userId } });
   }

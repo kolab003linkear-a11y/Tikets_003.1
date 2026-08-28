@@ -1,6 +1,6 @@
-# Manual de Identidad Visual: TicketSafe & tiKets
+# Manual de Identidad Visual: TiKetSafe
 
-Este documento establece los lineamientos de diseño visual, paleta de colores, tipografías y estándares de accesibilidad para la aplicación del ecosistema TicketSafe de tiKets.
+Este documento establece los lineamientos de diseño visual, paleta de colores, tipografías y estándares de accesibilidad para la aplicación TiKetSafe.
 
 ## 1. Concepto de diseño: Calma Pacífica
 

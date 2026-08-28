@@ -1,4 +1,4 @@
-# tiKets: documento de tareas
+# TiKetSafe: documento de tareas
 
 Este documento organiza la evolución de la aplicación por fases. Cada fase debe validarse antes de comenzar la siguiente.
 
@@ -217,6 +217,106 @@ El flujo completo está probado, documentado y listo para desplegarse en un ento
 3. Completar las fases 6 y 7 para cubrir usuarios y operación administrativa.
 4. Completar la fase 8 para pulir la experiencia.
 5. Completar la fase 9 antes de publicar una versión estable.
+
+## Roadmap de mejoras priorizadas
+
+Estas fases complementan las funcionalidades actuales y deben ejecutarse en el orden indicado.
+
+### Fase 10: Seguridad y configuración
+
+#### Objetivo
+Cerrar los riesgos de autorización y preparar configuraciones separadas para desarrollo, pruebas y producción.
+
+### Tareas
+
+- [x] Ignorar el campo `role` enviado durante el registro público.
+- [x] Crear siempre usuarios públicos con rol `CLIENT`.
+- [ ] Restringir la asignación de roles `ADMIN` y `SCANNER` a una operación administrativa segura.
+- [x] Añadir pruebas que verifiquen que un cliente no puede elevar sus privilegios.
+- [ ] Separar variables de entorno para desarrollo, staging y producción.
+- [x] Eliminar credenciales y secretos de valores predeterminados en producción.
+- [ ] Configurar una URL de API obligatoria y validada por entorno.
+- [x] Revisar CORS, límites de solicitudes y cabeceras de seguridad.
+
+#### Criterio de terminado
+Un usuario no puede obtener privilegios administrativos mediante el registro ni modificar la configuración sensible desde el cliente.
+
+### Fase 11: Reservas y pagos de producción
+
+#### Objetivo
+Convertir el flujo demo en un proceso de compra confiable y auditable.
+
+### Tareas
+
+- [ ] Elegir Stripe o PayPhone como proveedor definitivo.
+- [ ] Configurar credenciales mediante variables de entorno seguras.
+- [ ] Implementar creación de intención o sesión de pago en el backend.
+- [ ] Implementar webhook firmado del proveedor.
+- [ ] Añadir idempotencia para evitar cobros y reservas duplicadas.
+- [ ] Confirmar la reserva solo después de verificar el pago.
+- [ ] Mostrar estados de procesamiento, aprobado, rechazado y cancelado.
+- [ ] Probar expiración de reservas y conflictos entre dos dispositivos.
+
+#### Criterio de terminado
+Una compra no puede quedar pagada sin confirmación verificable del proveedor y cada operación repetida produce un único resultado.
+
+### Fase 12: Cuenta y tickets mejorados
+
+#### Objetivo
+Hacer que el usuario pueda recuperar, consultar y utilizar sus entradas con menos dependencia de la conexión.
+
+### Tareas
+
+- [ ] Añadir recuperación y cambio de contraseña.
+- [ ] Añadir control para mostrar u ocultar la contraseña.
+- [ ] Añadir bloqueo temporal tras intentos fallidos repetidos.
+- [ ] Permitir guardar o compartir el ticket digital.
+- [ ] Preparar tickets activos para consulta sin conexión.
+- [ ] Mostrar claramente estados válido, usado y expirado.
+- [ ] Añadir preferencias básicas del usuario.
+- [ ] Añadir confirmación antes de abandonar una reserva pendiente.
+
+#### Criterio de terminado
+El usuario puede recuperar el acceso a su cuenta y consultar sus tickets activos aun con conectividad limitada.
+
+### Fase 13: Operación administrativa
+
+#### Objetivo
+Convertir el panel administrativo en una herramienta de operación diaria.
+
+### Tareas
+
+- [ ] Crear un dashboard con ventas, reservas, ocupación y eventos próximos.
+- [ ] Añadir filtros por evento, fecha, sala y estado.
+- [ ] Mostrar disponibilidad y aforo en tiempo real.
+- [ ] Añadir historial de validaciones QR.
+- [ ] Añadir confirmaciones para eliminar o modificar eventos.
+- [ ] Registrar auditoría de acciones administrativas.
+- [ ] Mejorar la navegación administrativa sin saturar la barra inferior.
+- [ ] Diferenciar con claridad permisos de `ADMIN` y `SCANNER`.
+
+#### Criterio de terminado
+Un administrador puede operar eventos y revisar su actividad sin mezclar funciones de cliente ni perder trazabilidad.
+
+### Fase 14: Calidad y publicación
+
+#### Objetivo
+Reducir regresiones y preparar una primera versión estable desplegable.
+
+### Tareas
+
+- [ ] Añadir pruebas unitarias para autenticación, roles, reservas y pagos.
+- [ ] Añadir pruebas de integración para webhooks y expiración de reservas.
+- [ ] Ejecutar pruebas en Android, web y pantallas pequeñas.
+- [ ] Verificar estados de carga, error, vacío y reintento en cada flujo.
+- [ ] Revisar accesibilidad, contraste, tamaños táctiles y navegación por teclado en web.
+- [ ] Configurar logs estructurados y alertas de errores.
+- [ ] Ejecutar auditoría de dependencias y corregir vulnerabilidades relevantes.
+- [ ] Preparar backups y migraciones de PostgreSQL.
+- [ ] Crear una versión etiquetada y documentar el procedimiento de despliegue.
+
+#### Criterio de terminado
+El flujo de compra está cubierto por pruebas, los servicios tienen observabilidad básica y existe un procedimiento reproducible de despliegue.
 
 ## Validación por fase
 

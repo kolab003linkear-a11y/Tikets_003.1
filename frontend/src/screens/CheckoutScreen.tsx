@@ -4,6 +4,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { cancelReservation, confirmDemoPayment } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { colors, typography } from '../theme';
+import ProfileAvatar from '../components/ProfileAvatar';
 import AppButton from '../components/AppButton';
 
 export default function CheckoutScreen() {
@@ -72,6 +73,7 @@ export default function CheckoutScreen() {
             <Text style={styles.backText}>←</Text>
           </Pressable>
           <Text style={styles.title}>Checkout</Text>
+          <ProfileAvatar />
         </View>
 
         <View style={styles.summaryCard}>

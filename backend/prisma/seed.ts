@@ -94,12 +94,13 @@ async function main() {
   // Estadios de Ecuador
   const stadiumQuito = await prisma.stadium.upsert({
     where: { id: 'stadium-quito-001' },
-    update: {},
+    update: { name: 'Estadio Banco Guayaquil', city: 'Quito', imageUrl: 'https://images.unsplash.com/photo-1579952363873-27f3bede9f55?auto=format&fit=crop&w=1200&q=80' },
     create: {
       id: 'stadium-quito-001',
-      name: 'Estadio Olímpico Atahualpa',
+      name: 'Estadio Banco Guayaquil',
       city: 'Quito',
       capacity: 8000,
+      imageUrl: 'https://images.unsplash.com/photo-1579952363873-27f3bede9f55?auto=format&fit=crop&w=1200&q=80',
       seatLayout: { rows: Array.from({ length: 20 }, (_, i) => String.fromCharCode(65 + i)), columns: 40 },
       sectors: {
         create: [
@@ -115,12 +116,13 @@ async function main() {
 
   const stadiumGuayaquil = await prisma.stadium.upsert({
     where: { id: 'stadium-guayaquil-001' },
-    update: {},
+    update: { name: 'Estadio Jocay', city: 'Manta', imageUrl: 'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?auto=format&fit=crop&w=1200&q=80' },
     create: {
       id: 'stadium-guayaquil-001',
-      name: 'Monumental Banco Pichincha',
+      name: 'Estadio Jocay',
       city: 'Guayaquil',
       capacity: 8500,
+      imageUrl: 'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?auto=format&fit=crop&w=1200&q=80',
       seatLayout: { rows: Array.from({ length: 22 }, (_, i) => String.fromCharCode(65 + i)), columns: 38 },
       sectors: {
         create: [
@@ -136,12 +138,13 @@ async function main() {
 
   const stadiumCapwell = await prisma.stadium.upsert({
     where: { id: 'stadium-capwell-001' },
-    update: {},
+    update: { name: 'Estadio Bellavista', city: 'Ambato', imageUrl: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1200&q=80' },
     create: {
       id: 'stadium-capwell-001',
-      name: 'Estadio Capwell',
+      name: 'Estadio Bellavista',
       city: 'Guayaquil',
       capacity: 7500,
+      imageUrl: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1200&q=80',
       seatLayout: { rows: Array.from({ length: 20 }, (_, i) => String.fromCharCode(65 + i)), columns: 37 },
       sectors: {
         create: [
@@ -157,12 +160,13 @@ async function main() {
 
   const stadiumAmbato = await prisma.stadium.upsert({
     where: { id: 'stadium-ambato-001' },
-    update: {},
+    update: { name: 'Estadio COAC Mushuc Runa', city: 'Ambato', imageUrl: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=1200&q=80' },
     create: {
       id: 'stadium-ambato-001',
-      name: 'Estadio Moreno Martínez',
+      name: 'Estadio COAC Mushuc Runa',
       city: 'Ambato',
       capacity: 6000,
+      imageUrl: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=1200&q=80',
       seatLayout: { rows: Array.from({ length: 15 }, (_, i) => String.fromCharCode(65 + i)), columns: 40 },
       sectors: {
         create: [
@@ -220,52 +224,52 @@ async function main() {
   // Partidos de Ecuador - Clásicos del fútbol ecuatoriano
   await prisma.match.upsert({
     where: { id: 'match-001' },
-    update: {},
+    update: { stadiumId: stadiumQuito.id, homeTeam: 'Independiente del Valle', awayTeam: 'Universidad Católica (Quito)', startTime: new Date('2026-08-29T13:00:00-05:00'), status: MatchStatus.SCHEDULED },
     create: {
       id: 'match-001',
       stadiumId: stadiumQuito.id,
-      homeTeam: 'LDU Quito',
-      awayTeam: 'Barcelona SC',
-      startTime: new Date(now.getTime() + 1000 * 60 * 60 * 48),
+      homeTeam: 'Independiente del Valle',
+      awayTeam: 'Universidad Católica (Quito)',
+      startTime: new Date('2026-08-29T13:00:00-05:00'),
       status: MatchStatus.SCHEDULED,
     },
   });
 
   await prisma.match.upsert({
     where: { id: 'match-002' },
-    update: {},
+    update: { stadiumId: stadiumGuayaquil.id, homeTeam: 'Manta F.C.', awayTeam: 'Barcelona SC', startTime: new Date('2026-08-29T19:00:00-05:00'), status: MatchStatus.SCHEDULED },
     create: {
       id: 'match-002',
       stadiumId: stadiumGuayaquil.id,
-      homeTeam: 'Emelec',
-      awayTeam: 'El Nacional',
-      startTime: new Date(now.getTime() + 1000 * 60 * 60 * 72),
+      homeTeam: 'Manta F.C.',
+      awayTeam: 'Barcelona SC',
+      startTime: new Date('2026-08-29T19:00:00-05:00'),
       status: MatchStatus.SCHEDULED,
     },
   });
 
   await prisma.match.upsert({
     where: { id: 'match-003' },
-    update: {},
+    update: { stadiumId: stadiumCapwell.id, homeTeam: 'Técnico Universitario', awayTeam: 'Deportivo Cuenca', startTime: new Date('2026-08-28T19:00:00-05:00'), status: MatchStatus.SCHEDULED },
     create: {
       id: 'match-003',
       stadiumId: stadiumCapwell.id,
-      homeTeam: 'CS Emelec',
-      awayTeam: 'Independiente del Valle',
-      startTime: new Date(now.getTime() + 1000 * 60 * 60 * 96),
+      homeTeam: 'Técnico Universitario',
+      awayTeam: 'Deportivo Cuenca',
+      startTime: new Date('2026-08-28T19:00:00-05:00'),
       status: MatchStatus.SCHEDULED,
     },
   });
 
   await prisma.match.upsert({
     where: { id: 'match-004' },
-    update: {},
+    update: { stadiumId: stadiumAmbato.id, homeTeam: 'Mushuc Runa', awayTeam: 'Delfín', startTime: new Date('2026-08-28T15:30:00-05:00'), status: MatchStatus.SCHEDULED },
     create: {
       id: 'match-004',
       stadiumId: stadiumAmbato.id,
-      homeTeam: 'Técnico Universitario',
-      awayTeam: 'Macará',
-      startTime: new Date(now.getTime() + 1000 * 60 * 60 * 120),
+      homeTeam: 'Mushuc Runa',
+      awayTeam: 'Delfín',
+      startTime: new Date('2026-08-28T15:30:00-05:00'),
       status: MatchStatus.SCHEDULED,
     },
   });
@@ -273,7 +277,7 @@ async function main() {
   console.log('Seed ok:', {
     admin: admin.email,
     movies: [movie1.title, movie2.title, movie3.title],
-    stadiums: ['Quito', 'Guayaquil (Monumental)', 'Guayaquil (Capwell)', 'Ambato'],
+    stadiums: ['Banco Guayaquil', 'Jocay', 'Bellavista', 'COAC Mushuc Runa'],
     matches: 4,
   });
 }

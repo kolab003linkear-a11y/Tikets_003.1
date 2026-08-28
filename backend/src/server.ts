@@ -13,8 +13,18 @@ dotenv.config();
 
 const prisma = new PrismaClient();
 const app = express();
+const nodeEnvironment = process.env.NODE_ENV ?? 'development';
+const isProduction = nodeEnvironment === 'production';
 const port = Number(process.env.PORT ?? 4000);
-const jwtSecret = process.env.JWT_SECRET ?? 'tiKets-dev-secret';
+const jwtSecret = process.env.JWT_SECRET ?? (isProduction ? '' : 'tiKets-dev-secret');
+const corsOrigins = (process.env.CORS_ORIGINS ?? '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+if (isProduction && (!jwtSecret || jwtSecret === 'tiKets-dev-secret')) {
+  throw new Error('JWT_SECRET must be configured with a production secret.');
+}
 
 app.use((req, res, next) => {
   const startedAt = Date.now();
@@ -27,7 +37,6 @@ app.use((req, res, next) => {
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
-  role: z.enum(['CLIENT', 'ADMIN', 'SCANNER']).default('CLIENT'),
 });
 
 const loginSchema = z.object({
@@ -52,6 +61,8 @@ const paymentConfirmationSchema = z.object({
 
 const profileSchema = z.object({
   email: z.string().email(),
+  fullName: z.string().trim().min(2).max(100).optional(),
+  phone: z.string().trim().max(30).optional(),
 });
 
 const eventSchema = z.object({
@@ -97,6 +108,7 @@ const stadiumSchema = z.object({
   name: z.string().trim().min(1).max(120),
   city: z.string().trim().min(1).max(80),
   capacity: z.coerce.number().int().min(1).max(100000),
+  imageUrl: z.string().trim().url().nullable().optional(),
   seatLayout: z.object({
     rows: z.array(z.string().trim().min(1).max(3)).min(1).max(100),
     columns: z.coerce.number().int().min(1).max(100),
@@ -151,14 +163,22 @@ function authMiddleware(req: Request, _res: Response, next: NextFunction) {
 
 const normalizeSeats = (seats: string[]) => [...new Set(seats.map((seat) => seat.trim().toUpperCase()))].sort();
 
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors({
+  origin: isProduction
+    ? (origin, callback) => {
+        if (!origin || corsOrigins.includes(origin)) callback(null, true);
+        else callback(new Error('Origin not allowed by CORS.'));
+      }
+    : true,
+  credentials: true,
+}));
 app.use(helmet());
 app.use(express.json({ limit: '2mb' }));
 
 app.get('/api/health', async (_req, res, next) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
-    res.json({ ok: true, service: 'tiKets-api', database: 'connected', timestamp: new Date().toISOString() });
+    res.json({ ok: true, service: 'TiKetSafe-api', database: 'connected', timestamp: new Date().toISOString() });
   } catch (error) {
     writeLog('ERROR', 'Database health check failed', error);
     next(new AppError('Database unavailable.', 503));
@@ -175,11 +195,13 @@ app.post('/api/auth/register', async (req, res, next) => {
       data: {
         email,
         passwordHash,
-        role: payload.role,
+        role: UserRole.CLIENT,
       },
       select: {
         id: true,
         email: true,
+        fullName: true,
+        phone: true,
         role: true,
         createdAt: true,
       },
@@ -214,6 +236,8 @@ app.post('/api/auth/login', async (req, res, next) => {
       user: {
         id: user.id,
         email: user.email,
+        fullName: user.fullName,
+        phone: user.phone,
         role: user.role,
         createdAt: user.createdAt,
       },
@@ -229,7 +253,7 @@ app.get('/api/me', authMiddleware, async (req, res, next) => {
     const authenticatedUser = (req as Request & { user: { sub: string } }).user;
     const user = await prisma.user.findUnique({
       where: { id: authenticatedUser.sub },
-      select: { id: true, email: true, role: true, createdAt: true },
+      select: { id: true, email: true, fullName: true, phone: true, role: true, createdAt: true },
     });
 
     if (!user) throw new AppError('User not found.', 404);
@@ -245,8 +269,12 @@ app.patch('/api/me', authMiddleware, async (req, res, next) => {
     const authenticatedUser = (req as Request & { user: { sub: string } }).user;
     const user = await prisma.user.update({
       where: { id: authenticatedUser.sub },
-      data: { email: payload.email.trim().toLowerCase() },
-      select: { id: true, email: true, role: true, createdAt: true },
+      data: {
+        email: payload.email.trim().toLowerCase(),
+        fullName: payload.fullName?.trim() || null,
+        phone: payload.phone?.trim() || null,
+      },
+      select: { id: true, email: true, fullName: true, phone: true, role: true, createdAt: true },
     });
 
     return res.json({ user });
@@ -423,10 +451,23 @@ app.get('/api/matches', async (_req, res, next) => {
   try {
     const matches = await prisma.match.findMany({
       where: { status: { in: ['SCHEDULED', 'LIVE'] } },
-      include: { stadium: { include: { sectors: true } }, _count: { select: { tickets: true } } },
+      include: {
+        stadium: { include: { sectors: true } },
+        tickets: { where: { status: { in: [StadiumTicketStatus.VALID, StadiumTicketStatus.USED] } }, select: { sectorId: true, seatNumber: true } },
+        _count: { select: { tickets: true } },
+      },
       orderBy: { startTime: 'asc' },
     });
-    return res.json({ matches });
+    return res.json({ matches: matches.map(({ tickets, ...match }) => ({
+      ...match,
+      stadium: {
+        ...match.stadium,
+        sectors: match.stadium.sectors.map((sector) => ({
+          ...sector,
+          occupiedSeats: tickets.filter((ticket) => ticket.sectorId === sector.id).map((ticket) => ticket.seatNumber),
+        })),
+      },
+    })) });
   } catch (error) {
     next(error);
   }
@@ -451,7 +492,7 @@ app.post('/api/admin/stadiums', authMiddleware, async (req, res, next) => {
     const seatCount = payload.seatLayout.rows.length * payload.seatLayout.columns;
     const sectorCapacity = payload.sectors.reduce((total, sector) => total + sector.capacity, 0);
     if (seatCount < payload.capacity || sectorCapacity !== payload.capacity) throw new AppError('Stadium capacity and sectors must match the seat layout.', 400);
-    const stadium = await prisma.stadium.create({ data: { name: payload.name, city: payload.city, capacity: payload.capacity, seatLayout: payload.seatLayout, sectors: { create: payload.sectors } }, include: { sectors: true } });
+    const stadium = await prisma.stadium.create({ data: { name: payload.name, city: payload.city, capacity: payload.capacity, imageUrl: payload.imageUrl ?? null, seatLayout: payload.seatLayout, sectors: { create: payload.sectors } }, include: { sectors: true } });
     return res.status(201).json({ stadium });
   } catch (error) {
     next(error);
@@ -805,32 +846,59 @@ app.post('/api/payments/demo-confirm', authMiddleware, async (req, res, next) =>
 app.get('/api/tickets', authMiddleware, async (req, res, next) => {
   try {
     const authenticatedUser = (req as Request & { user: { sub: string } }).user;
-    const tickets = await prisma.ticket.findMany({
-      where: { reservation: { userId: authenticatedUser.sub } },
-      include: {
-        reservation: {
-          include: { showtime: { include: { movie: true, room: true } } },
+    const [tickets, stadiumTickets] = await Promise.all([
+      prisma.ticket.findMany({
+        where: { reservation: { userId: authenticatedUser.sub } },
+        include: {
+          reservation: {
+            include: { showtime: { include: { movie: true, room: true } } },
+          },
         },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.stadiumTicket.findMany({
+        where: { userId: authenticatedUser.sub },
+        include: { match: { include: { stadium: true } }, sector: true },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    const cinemaTickets = tickets.map((ticket) => ({
+      id: ticket.id,
+      seatNumber: ticket.seatNumber,
+      status: ticket.status,
+      createdAt: ticket.createdAt,
+      usedAt: ticket.usedAt,
+      qrPayload: `ticketsafe:v1:${ticket.id}:${ticket.qrCodeHash}`,
+      reservationId: ticket.reservationId,
+      reservationStatus: ticket.reservation.status,
+      event: {
+        title: ticket.reservation.showtime.movie.title,
+        startTime: ticket.reservation.showtime.startTime,
+        room: ticket.reservation.showtime.room.name,
       },
-      orderBy: { createdAt: 'desc' },
-    });
+    }));
+
+    const stadiumTicketDetails = stadiumTickets.map((ticket) => ({
+      id: ticket.id,
+      seatNumber: ticket.seatNumber,
+      status: ticket.status,
+      createdAt: ticket.createdAt,
+      usedAt: ticket.usedAt,
+      qrPayload: `stadiumsafe:v1:${ticket.id}:${ticket.qrCodeHash}`,
+      reservationId: `stadium:${ticket.id}`,
+      reservationStatus: ReservationStatus.PAID,
+      event: {
+        title: `${ticket.match.homeTeam} vs ${ticket.match.awayTeam}`,
+        startTime: ticket.match.startTime,
+        room: `${ticket.match.stadium.name} · ${ticket.sector.name}`,
+      },
+    }));
 
     return res.json({
-      tickets: tickets.map((ticket) => ({
-        id: ticket.id,
-        seatNumber: ticket.seatNumber,
-        status: ticket.status,
-        createdAt: ticket.createdAt,
-        usedAt: ticket.usedAt,
-        qrPayload: `ticketsafe:v1:${ticket.id}:${ticket.qrCodeHash}`,
-        reservationId: ticket.reservationId,
-        reservationStatus: ticket.reservation.status,
-        event: {
-          title: ticket.reservation.showtime.movie.title,
-          startTime: ticket.reservation.showtime.startTime,
-          room: ticket.reservation.showtime.room.name,
-        },
-      })),
+      tickets: [...cinemaTickets, ...stadiumTicketDetails].sort((first, second) =>
+        second.createdAt.getTime() - first.createdAt.getTime(),
+      ),
     });
   } catch (error) {
     next(error);
@@ -1093,7 +1161,7 @@ export { app, prisma };
 
 if (require.main === module) {
   app.listen(port, () => {
-    const message = `tiKets API running at http://localhost:${port}`;
+    const message = `TiKetSafe API running at http://localhost:${port}`;
     console.log(message);
     writeLog('INFO', message);
     prisma.$connect()

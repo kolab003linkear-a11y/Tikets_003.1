@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, Image, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../auth/AuthContext';
 import { AdminEvent, AdminEventInput, createAdminEvent, getAdminEvents, updateAdminEvent } from '../api/client';
 import { colors, typography } from '../theme';
@@ -25,6 +26,7 @@ export default function AdminEventsScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [filter, setFilter] = useState<'ALL' | 'NOW_SHOWING' | 'COMING_SOON'>('ALL');
 
   const loadEvents = async () => {
     if (!token) return;
@@ -43,6 +45,11 @@ export default function AdminEventsScreen() {
   useEffect(() => {
     if (user?.role === 'ADMIN') void loadEvents();
   }, [token, user?.role]);
+
+  const visibleEvents = useMemo(
+    () => filter === 'ALL' ? events : events.filter((event) => event.status === filter),
+    [events, filter],
+  );
 
   if (!user || user.role !== 'ADMIN') {
     return (
@@ -101,12 +108,22 @@ export default function AdminEventsScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.overline}>Operación</Text>
-        <Text style={styles.title}>Eventos</Text>
-        <Text style={styles.subtitle}>Crea y actualiza la cartelera desde una cuenta administradora.</Text>
+        <View style={styles.headerRow}>
+          <View><Text style={styles.overline}>Catálogo</Text><Text style={styles.title}>Eventos</Text></View>
+          <View style={styles.headerIcon}><Ionicons name="film-outline" size={21} color={colors.text} /></View>
+        </View>
+        <Text style={styles.subtitle}>Administra lo que aparece en la cartelera y mantén tu programación al día.</Text>
+
+        <View style={styles.statsRow}>
+          <View style={styles.statItem}><Text style={styles.statValue}>{events.length}</Text><Text style={styles.statLabel}>Eventos</Text></View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}><Text style={[styles.statValue, styles.statSuccess]}>{events.filter((event) => event.status === 'NOW_SHOWING').length}</Text><Text style={styles.statLabel}>En cartelera</Text></View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}><Text style={[styles.statValue, styles.statWarning]}>{events.reduce((total, event) => total + (event._count?.showtimes ?? 0), 0)}</Text><Text style={styles.statLabel}>Funciones</Text></View>
+        </View>
 
         <View style={styles.form}>
-          <Text style={styles.sectionTitle}>{editingId ? 'Editar evento' : 'Nuevo evento'}</Text>
+          <View style={styles.formHeader}><View><Text style={styles.sectionTitle}>{editingId ? 'Editar evento' : 'Nuevo evento'}</Text><Text style={styles.formHint}>{editingId ? 'Actualiza la información publicada.' : 'Añade una nueva experiencia a la cartelera.'}</Text></View><Ionicons name={editingId ? 'create-outline' : 'add-circle-outline'} size={24} color={colors.primary} /></View>
           <Field label="Título" value={draft.title} onChangeText={(value) => updateDraft('title', value)} />
           <Field label="Sinopsis" value={draft.synopsis} onChangeText={(value) => updateDraft('synopsis', value)} multiline />
           <Field label="Duración (minutos)" value={String(draft.duration)} keyboardType="numeric" onChangeText={(value) => updateDraft('duration', Number(value) || 0)} />
@@ -138,15 +155,23 @@ export default function AdminEventsScreen() {
 
         <View style={styles.listHeader}>
           <Text style={styles.sectionTitle}>Cartelera registrada</Text>
-          <Pressable onPress={() => void loadEvents()}><Text style={styles.refresh}>Actualizar</Text></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="Actualizar eventos" onPress={() => void loadEvents()}><Ionicons name="refresh-outline" size={19} color={colors.primary} /></Pressable>
         </View>
-        {loading ? <ActivityIndicator color={colors.primary} /> : error ? <Text style={styles.error}>{error}</Text> : events.map((event) => (
+        <View style={styles.filters}>
+          {(['ALL', 'NOW_SHOWING', 'COMING_SOON'] as const).map((item) => (
+            <Pressable key={item} accessibilityRole="button" accessibilityState={{ selected: filter === item }} style={[styles.filter, filter === item && styles.filterSelected]} onPress={() => setFilter(item)}>
+              <Text style={[styles.filterText, filter === item && styles.filterTextSelected]}>{item === 'ALL' ? 'Todos' : item === 'NOW_SHOWING' ? 'En cartelera' : 'Próximamente'}</Text>
+            </Pressable>
+          ))}
+        </View>
+        {loading ? <ActivityIndicator color={colors.primary} /> : error ? <Text style={styles.error}>{error}</Text> : visibleEvents.map((event) => (
           <View key={event.id} style={styles.eventRow}>
+            <Image source={{ uri: event.posterUrl }} style={styles.eventPoster} />
             <View style={styles.eventInfo}>
-              <Text style={styles.eventTitle}>{event.title}</Text>
-              <Text style={styles.meta}>{event.category} · {event._count?.showtimes ?? 0} funciones · {event.status === 'NOW_SHOWING' ? 'En cartelera' : 'Próximamente'}</Text>
+              <View style={styles.eventTitleRow}><Text style={styles.eventTitle} numberOfLines={1}>{event.title}</Text><View style={[styles.statusBadge, event.status === 'NOW_SHOWING' ? styles.statusLive : styles.statusSoon]}><Text style={styles.statusText}>{event.status === 'NOW_SHOWING' ? 'ACTIVO' : 'PRÓXIMO'}</Text></View></View>
+              <Text style={styles.meta}>{event.category} · {event._count?.showtimes ?? 0} funciones</Text>
             </View>
-            <Pressable style={styles.editButton} onPress={() => startEditing(event)}><Text style={styles.editText}>Editar</Text></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel={`Editar ${event.title}`} style={styles.editButton} onPress={() => startEditing(event)}><Ionicons name="pencil-outline" size={17} color={colors.primary} /></Pressable>
           </View>
         ))}
       </ScrollView>
@@ -167,10 +192,21 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
   container: { padding: 16, gap: 12 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  headerIcon: { width: 42, height: 42, borderRadius: 13, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   overline: { color: colors.primary, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.4 },
   title: { color: colors.text, fontSize: 30, fontWeight: '800', fontFamily: typography.display },
   subtitle: { color: colors.textSecondary, fontSize: 14, lineHeight: 20 },
+  statsRow: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, paddingVertical: 12, marginTop: 4 },
+  statItem: { flex: 1, alignItems: 'center', gap: 3 },
+  statValue: { color: colors.text, fontSize: 20, fontWeight: '800' },
+  statSuccess: { color: colors.success },
+  statWarning: { color: colors.warning },
+  statLabel: { color: colors.textSecondary, fontSize: 10, fontWeight: '600', textAlign: 'center' },
+  statDivider: { width: 1, backgroundColor: colors.border },
   form: { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: 16, padding: 16, gap: 10 },
+  formHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 },
+  formHint: { color: colors.textSecondary, fontSize: 11, marginTop: 4 },
   sectionTitle: { color: colors.text, fontSize: 18, fontWeight: '800' },
   label: { color: colors.text, fontSize: 12, fontWeight: '700', marginTop: 4 },
   input: { minHeight: 46, backgroundColor: colors.input, borderColor: colors.borderStrong, borderWidth: 1, borderRadius: 10, color: colors.text, paddingHorizontal: 12, paddingVertical: 10 },
@@ -186,11 +222,21 @@ const styles = StyleSheet.create({
   secondaryText: { color: colors.textSecondary, fontWeight: '700' },
   listHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 },
   refresh: { color: colors.primary, fontWeight: '700' },
-  eventRow: { backgroundColor: colors.surfaceRaised, borderColor: colors.border, borderWidth: 1, borderRadius: 12, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  filters: { flexDirection: 'row', gap: 7, marginBottom: 2 },
+  filter: { backgroundColor: colors.surface, borderRadius: 999, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 11, paddingVertical: 8 },
+  filterSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
+  filterText: { color: colors.textSecondary, fontSize: 11, fontWeight: '700' },
+  filterTextSelected: { color: colors.text },
+  eventRow: { backgroundColor: colors.surfaceRaised, borderColor: colors.border, borderWidth: 1, borderRadius: 12, padding: 10, flexDirection: 'row', alignItems: 'center', gap: 11 },
+  eventPoster: { width: 52, height: 68, borderRadius: 8, backgroundColor: colors.input },
   eventInfo: { flex: 1 },
+  eventTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   eventTitle: { color: colors.text, fontSize: 16, fontWeight: '800' },
   meta: { color: colors.textSecondary, fontSize: 12, marginTop: 5 },
-  editButton: { borderColor: colors.borderStrong, borderWidth: 1, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8 },
-  editText: { color: colors.primary, fontWeight: '800', fontSize: 12 },
+  statusBadge: { borderRadius: 999, paddingHorizontal: 7, paddingVertical: 4 },
+  statusLive: { backgroundColor: colors.success + '25' },
+  statusSoon: { backgroundColor: colors.warning + '25' },
+  statusText: { color: colors.text, fontSize: 9, fontWeight: '800' },
+  editButton: { width: 36, height: 36, borderColor: colors.borderStrong, borderWidth: 1, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   error: { color: colors.critical, fontWeight: '700' },
 });

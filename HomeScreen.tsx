@@ -91,7 +91,7 @@ export default function HomeScreen() {
         <View style={styles.headerRow}>
           <View>
             <Text style={styles.overline}>Centro cultural</Text>
-            <Text style={styles.title}>tiKets</Text>
+            <Text style={styles.title}>TiKetSafe</Text>
           </View>
           <Pressable style={styles.avatarButton}>
             <Text style={styles.avatarText}>OM</Text>

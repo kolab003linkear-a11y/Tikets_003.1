@@ -1,4 +1,4 @@
-# tiKets: módulo de estadios
+# TiKetSafe: módulo de estadios
 
 Este documento organiza la construcción del módulo de entradas para partidos en estadios.
 

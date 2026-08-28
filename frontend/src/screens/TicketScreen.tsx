@@ -3,6 +3,7 @@ import { Animated, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react
 import { useNavigation, useRoute } from '@react-navigation/native';
 import QRCode from 'react-native-qrcode-svg';
 import { colors, typography } from '../theme';
+import ProfileAvatar from '../components/ProfileAvatar';
 
 export default function TicketScreen() {
   const navigation = useNavigation<any>();
@@ -33,6 +34,7 @@ export default function TicketScreen() {
         <Pressable accessibilityRole="button" accessibilityLabel="Volver al inicio" style={styles.homeButton} onPress={() => navigation.popToTop()}>
           <Text style={styles.homeText}>Inicio</Text>
         </Pressable>
+        <View style={styles.profileButton}><ProfileAvatar /></View>
 
         <Animated.View style={[styles.ticketCard, { transform: [{ scale }], shadowOpacity: glow }]}> 
           <Animated.View style={[styles.glow, { opacity: glow }]} />
@@ -57,6 +59,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: colors.background },
   homeButton: { position: 'absolute', top: 50, left: 20, backgroundColor: colors.surface, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10 },
   homeText: { color: colors.text, fontWeight: '700' },
+  profileButton: { position: 'absolute', top: 48, right: 20 },
   ticketCard: { width: '100%', maxWidth: 420, backgroundColor: colors.surface, borderRadius: 24, padding: 24, borderWidth: 1, borderColor: colors.success, shadowColor: colors.success, shadowOffset: { width: 0, height: 0 }, shadowRadius: 30, elevation: 12 },
   glow: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 24, backgroundColor: colors.success, opacity: 0.1 },
   badge: { color: colors.success, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.2, fontWeight: '700', marginBottom: 10 },

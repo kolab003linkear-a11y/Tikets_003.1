@@ -1,4 +1,4 @@
-# tiKets
+# TiKetSafe
 
 Aplicacion movil para descubrir eventos, seleccionar localidades, reservar entradas y mostrar tickets digitales con codigo QR. Incluye un modulo de estadios para consultar partidos, sectores, localidades y validar el acceso desde perfiles administrativos.
 
@@ -52,7 +52,9 @@ Configura las variables del backend en `backend/.env`:
 ```env
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/tiKets?schema=public"
 PORT=4000
+NODE_ENV="development"
 JWT_SECRET="cambia-esta-clave-por-una-segura"
+CORS_ORIGINS="http://localhost:8081"
 STRIPE_SECRET_KEY="sk_test_xxx"
 PAYPHONE_API_KEY="your_payphone_key"
 PAYPHONE_WEBHOOK_SECRET="your_webhook_secret"

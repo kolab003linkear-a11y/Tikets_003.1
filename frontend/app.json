@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "tiKets",
-    "slug": "tiKets-mobile",
+    "name": "TiKetSafe",
+    "slug": "tiketsafe-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",

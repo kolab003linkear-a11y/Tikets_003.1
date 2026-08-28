@@ -13,6 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { CatalogMovie, getCatalog } from '../api/client';
 import { colors, typography } from '../theme';
 import AppState from '../components/AppState';
+import ProfileAvatar from '../components/ProfileAvatar';
 
 const categories = ['Todos', 'CINE', 'TEATRO', 'CONCIERTO'];
 
@@ -72,11 +73,9 @@ export default function HomeScreen() {
         <View style={styles.headerRow}>
           <View>
             <Text style={styles.overline}>Centro cultural</Text>
-            <Text style={styles.title}>tiKets</Text>
+            <Text style={styles.title}>TiKetSafe</Text>
           </View>
-          <Pressable accessibilityRole="button" accessibilityLabel="Abrir perfil" style={styles.avatar}>
-            <Text style={styles.avatarText}>OM</Text>
-          </Pressable>
+          <ProfileAvatar />
         </View>
 
         <TextInput

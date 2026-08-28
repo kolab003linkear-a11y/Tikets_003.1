@@ -1,4 +1,4 @@
-# tiKets: herramientas y estructura
+# TiKetSafe: herramientas y estructura
 
 ## Herramientas usadas
 

@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../auth/AuthContext';
 import { AdminEvent, AdminRoom, AdminRoomInput, AdminShowtime, AdminShowtimeInput, createAdminRoom, createAdminShowtime, getAdminEvents, getAdminRooms, getAdminShowtimes, updateAdminRoom, updateAdminShowtime } from '../api/client';
 import { colors, typography } from '../theme';
@@ -19,6 +20,8 @@ export default function AdminScheduleScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  const totalCapacity = useMemo(() => rooms.reduce((total, room) => total + room.capacity, 0), [rooms]);
 
   const loadData = async () => {
     if (!token) return;
@@ -101,22 +104,32 @@ export default function AdminScheduleScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.overline}>Operación</Text>
-        <Text style={styles.title}>Salas y funciones</Text>
+        <View style={styles.headerRow}>
+          <View><Text style={styles.overline}>Programación</Text><Text style={styles.title}>Salas y funciones</Text></View>
+          <View style={styles.headerIcon}><Ionicons name="calendar-outline" size={21} color={colors.text} /></View>
+        </View>
         <Text style={styles.subtitle}>Configura la distribución y publica horarios con precio y disponibilidad.</Text>
         {loading ? <ActivityIndicator color={colors.primary} size="large" /> : error ? <Text style={styles.error}>{error}</Text> : <>
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}><Text style={styles.statValue}>{rooms.length}</Text><Text style={styles.statLabel}>Salas</Text></View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}><Text style={styles.statValue}>{totalCapacity}</Text><Text style={styles.statLabel}>Aforo total</Text></View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}><Text style={[styles.statValue, styles.statSuccess]}>{showtimes.length}</Text><Text style={styles.statLabel}>Funciones</Text></View>
+          </View>
           <View style={styles.form}>
-            <Text style={styles.sectionTitle}>{editingRoomId ? 'Editar sala' : 'Nueva sala'}</Text>
+            <View style={styles.formHeader}><View><Text style={styles.sectionTitle}>{editingRoomId ? 'Editar sala' : 'Nueva sala'}</Text><Text style={styles.formHint}>Define el mapa de localidades y su capacidad.</Text></View><Ionicons name="business-outline" size={23} color={colors.primary} /></View>
             <Field label="Nombre" value={roomDraft.name} onChangeText={(value) => setRoomDraft({ ...roomDraft, name: value })} />
             <Field label="Capacidad" value={String(roomDraft.capacity)} keyboardType="numeric" onChangeText={(value) => setRoomDraft({ ...roomDraft, capacity: Number(value) || 0 })} />
             <Field label="Filas (separadas por comas)" value={roomDraft.seatLayout.rows.join(', ')} onChangeText={(value) => setRoomDraft({ ...roomDraft, seatLayout: { ...roomDraft.seatLayout, rows: value.split(',').map((item) => item.trim()).filter(Boolean) } })} />
             <Field label="Columnas" value={String(roomDraft.seatLayout.columns)} keyboardType="numeric" onChangeText={(value) => setRoomDraft({ ...roomDraft, seatLayout: { ...roomDraft.seatLayout, columns: Number(value) || 0 } })} />
             <Pressable style={styles.primaryButton} onPress={() => void saveRoom()} disabled={saving}><Text style={styles.buttonText}>{editingRoomId ? 'Guardar sala' : 'Crear sala'}</Text></Pressable>
           </View>
-          {rooms.map((room) => <View style={styles.row} key={room.id}><View style={styles.info}><Text style={styles.rowTitle}>{room.name}</Text><Text style={styles.meta}>{room.capacity} plazas · {room.seatLayout.rows.length} filas x {room.seatLayout.columns} columnas · {room._count?.showtimes ?? 0} funciones</Text></View><Pressable style={styles.editButton} onPress={() => editRoom(room)}><Text style={styles.editText}>Editar</Text></Pressable></View>)}
+          <Text style={styles.listTitle}>Salas registradas</Text>
+          {rooms.map((room) => <View style={styles.row} key={room.id}><View style={styles.roomIcon}><Ionicons name="grid-outline" size={21} color={colors.primary} /></View><View style={styles.info}><Text style={styles.rowTitle}>{room.name}</Text><Text style={styles.meta}>{room.capacity} plazas · {room.seatLayout.rows.length} filas x {room.seatLayout.columns} columnas</Text><View style={styles.roomFooter}><Text style={styles.roomFunctions}>{room._count?.showtimes ?? 0} funciones programadas</Text><View style={styles.capacityBar}><View style={[styles.capacityFill, { width: `${Math.min(100, (room.capacity / Math.max(totalCapacity, 1)) * 100)}%` }]} /></View></View></View><Pressable accessibilityRole="button" accessibilityLabel={`Editar ${room.name}`} style={styles.editButton} onPress={() => editRoom(room)}><Ionicons name="pencil-outline" size={17} color={colors.primary} /></Pressable></View>)}
 
           <View style={styles.form}>
-            <Text style={styles.sectionTitle}>{editingShowtimeId ? 'Editar función' : 'Nueva función'}</Text>
+            <View style={styles.formHeader}><View><Text style={styles.sectionTitle}>{editingShowtimeId ? 'Editar función' : 'Nueva función'}</Text><Text style={styles.formHint}>Publica cuándo y dónde ocurre cada evento.</Text></View><Ionicons name="time-outline" size={23} color={colors.primary} /></View>
             {selectValue('Evento', events.map((event) => ({ id: event.id, name: event.title })), showtimeDraft.movieId, (movieId) => setShowtimeDraft({ ...showtimeDraft, movieId }))}
             {selectValue('Sala', rooms.map((room) => ({ id: room.id, name: room.name })), showtimeDraft.roomId, (roomId) => setShowtimeDraft({ ...showtimeDraft, roomId }))}
             <Field label="Fecha y hora (ISO)" value={showtimeDraft.startTime} placeholder="2026-09-15T20:00" onChangeText={(value) => setShowtimeDraft({ ...showtimeDraft, startTime: value })} />
@@ -124,7 +137,8 @@ export default function AdminScheduleScreen() {
             <Field label="Disponibilidad" value={String(showtimeDraft.availableSeats || '')} keyboardType="numeric" onChangeText={(value) => setShowtimeDraft({ ...showtimeDraft, availableSeats: Number(value) || 0 })} />
             <Pressable style={styles.primaryButton} onPress={() => void saveShowtime()} disabled={saving}><Text style={styles.buttonText}>{editingShowtimeId ? 'Guardar función' : 'Crear función'}</Text></Pressable>
           </View>
-          {showtimes.map((showtime) => <View style={styles.row} key={showtime.id}><View style={styles.info}><Text style={styles.rowTitle}>{showtime.movie.title}</Text><Text style={styles.meta}>{new Date(showtime.startTime).toLocaleString('es-ES')} · {showtime.room.name} · €{Number(showtime.price).toFixed(2)} · {showtime.availableSeats}/{showtime.room.capacity} libres</Text></View><Pressable style={styles.editButton} onPress={() => editShowtime(showtime)}><Text style={styles.editText}>Editar</Text></Pressable></View>)}
+          <Text style={styles.listTitle}>Funciones programadas</Text>
+          {showtimes.map((showtime) => <View style={styles.row} key={showtime.id}><View style={styles.dateBadge}><Text style={styles.dateDay}>{new Date(showtime.startTime).getDate()}</Text><Text style={styles.dateMonth}>{new Date(showtime.startTime).toLocaleDateString('es-ES', { month: 'short' }).replace('.', '').toUpperCase()}</Text></View><View style={styles.info}><Text style={styles.rowTitle}>{showtime.movie.title}</Text><Text style={styles.meta}>{new Date(showtime.startTime).toLocaleString('es-ES', { weekday: 'short', hour: '2-digit', minute: '2-digit' })} · {showtime.room.name}</Text><Text style={styles.showtimeMeta}>€{Number(showtime.price).toFixed(2)} · {showtime.availableSeats}/{showtime.room.capacity} libres</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`Editar función de ${showtime.movie.title}`} style={styles.editButton} onPress={() => editShowtime(showtime)}><Ionicons name="pencil-outline" size={17} color={colors.primary} /></Pressable></View>)}
         </>}
         <Pressable onPress={() => void loadData()}><Text style={styles.refresh}>Actualizar datos</Text></Pressable>
       </ScrollView>
@@ -140,10 +154,20 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
   container: { padding: 16, gap: 12 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  headerIcon: { width: 42, height: 42, borderRadius: 13, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   overline: { color: colors.primary, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.4 },
   title: { color: colors.text, fontSize: 30, fontWeight: '800', fontFamily: typography.display },
   subtitle: { color: colors.textSecondary, fontSize: 14, lineHeight: 20 },
+  statsRow: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, paddingVertical: 12, marginTop: 4 },
+  statItem: { flex: 1, alignItems: 'center', gap: 3 },
+  statValue: { color: colors.text, fontSize: 20, fontWeight: '800' },
+  statSuccess: { color: colors.success },
+  statLabel: { color: colors.textSecondary, fontSize: 10, fontWeight: '600', textAlign: 'center' },
+  statDivider: { width: 1, backgroundColor: colors.border },
   form: { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: 16, padding: 16, gap: 10, marginTop: 8 },
+  formHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 },
+  formHint: { color: colors.textSecondary, fontSize: 11, marginTop: 4 },
   sectionTitle: { color: colors.text, fontSize: 18, fontWeight: '800' },
   label: { color: colors.text, fontSize: 12, fontWeight: '700', marginTop: 4 },
   input: { minHeight: 46, backgroundColor: colors.input, borderColor: colors.borderStrong, borderWidth: 1, borderRadius: 10, color: colors.text, paddingHorizontal: 12 },
@@ -153,11 +177,21 @@ const styles = StyleSheet.create({
   optionText: { color: colors.text, fontSize: 12, fontWeight: '700' },
   primaryButton: { minHeight: 46, backgroundColor: colors.primary, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
   buttonText: { color: colors.text, fontWeight: '800' },
-  row: { backgroundColor: colors.surfaceRaised, borderColor: colors.border, borderWidth: 1, borderRadius: 12, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  listTitle: { color: colors.text, fontSize: 17, fontWeight: '800', marginTop: 4 },
+  row: { backgroundColor: colors.surfaceRaised, borderColor: colors.border, borderWidth: 1, borderRadius: 12, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  roomIcon: { width: 42, height: 42, borderRadius: 12, backgroundColor: colors.primary + '20', alignItems: 'center', justifyContent: 'center' },
   info: { flex: 1 },
   rowTitle: { color: colors.text, fontSize: 15, fontWeight: '800' },
   meta: { color: colors.textSecondary, fontSize: 12, marginTop: 4 },
-  editButton: { borderColor: colors.borderStrong, borderWidth: 1, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8 },
+  roomFooter: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 7 },
+  roomFunctions: { color: colors.textSecondary, fontSize: 10 },
+  capacityBar: { flex: 1, height: 4, backgroundColor: colors.input, borderRadius: 2, overflow: 'hidden' },
+  capacityFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 2 },
+  dateBadge: { width: 45, height: 49, borderRadius: 11, backgroundColor: colors.primary + '20', alignItems: 'center', justifyContent: 'center' },
+  dateDay: { color: colors.text, fontSize: 19, fontWeight: '800', lineHeight: 21 },
+  dateMonth: { color: colors.primary, fontSize: 9, fontWeight: '800' },
+  showtimeMeta: { color: colors.success, fontSize: 11, fontWeight: '700', marginTop: 5 },
+  editButton: { width: 36, height: 36, borderColor: colors.borderStrong, borderWidth: 1, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   editText: { color: colors.primary, fontWeight: '800', fontSize: 12 },
   refresh: { color: colors.primary, textAlign: 'center', fontWeight: '800', paddingVertical: 10 },
   error: { color: colors.critical, fontWeight: '700' },

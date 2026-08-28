@@ -78,7 +78,7 @@ app.use(helmet());
 app.use(express.json({ limit: '2mb' }));
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'tiKets-api', time: new Date().toISOString() });
+  res.json({ ok: true, service: 'TiKetSafe-api', time: new Date().toISOString() });
 });
 
 app.post('/api/auth/register', async (req: Request, res: Response, next: NextFunction) => {
@@ -341,5 +341,5 @@ app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`tiKets API running on http://localhost:${PORT}`);
+  console.log(`TiKetSafe API running on http://localhost:${PORT}`);
 });

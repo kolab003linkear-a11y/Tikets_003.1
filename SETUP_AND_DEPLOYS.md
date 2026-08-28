@@ -1,4 +1,4 @@
-# tiKets — Setup y despliegue
+# TiKetSafe — Setup y despliegue
 
 ## 1. Prerrequisitos
 
