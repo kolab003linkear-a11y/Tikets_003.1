@@ -191,7 +191,7 @@ export default function SeatSelectionScreen() {
 
         <View style={styles.summary}>
           <View style={styles.summaryRow}><Text style={styles.summaryLabel}>Butacas</Text><Text style={styles.summaryValue}>{selectedSeats.length ? selectedSeats.join(', ') : 'Ninguna'}</Text></View>
-          <View style={styles.summaryRow}><Text style={styles.summaryLabel}>Total</Text><Text style={styles.summaryValue}>€{total.toFixed(2)}</Text></View>
+          <View style={styles.summaryRow}><Text style={styles.summaryLabel}>Total</Text><Text style={styles.summaryValue}>${total.toFixed(2)}</Text></View>
           <AppButton
             label="Cancelar reserva"
             variant="secondary"

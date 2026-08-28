@@ -60,7 +60,7 @@ export default function CheckoutScreen() {
           <Text style={styles.summaryText}>Reserva: {reservationId}</Text>
           <Text style={styles.summaryText}>Butacas: {selectedSeats.join(', ')}</Text>
           <Text style={styles.summaryText}>Entradas: {ticketCount}</Text>
-          <Text style={styles.priceText}>Total: €{total.toFixed(2)}</Text>
+          <Text style={styles.priceText}>Total: ${total.toFixed(2)}</Text>
         </View>
 
         <View style={styles.formCard}>

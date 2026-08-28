@@ -197,7 +197,7 @@ export default function StadiumScreen() {
                     {Math.max(0, sector.capacity - (sector.occupiedSeats?.length ?? 0)).toLocaleString('es-ES')} libres
                   </Text>
                   <Text style={[styles.optionPrice, selectedSectorId === sector.id && styles.optionTextSelected]}>
-                    €{Number(sector.price).toFixed(2)}
+                    ${Number(sector.price).toFixed(2)}
                   </Text>
                 </Pressable>
               ))}
@@ -253,7 +253,7 @@ export default function StadiumScreen() {
               <View style={styles.summary}>
                 <Text style={styles.summaryText}>Localidad seleccionada: <Text style={styles.summaryBold}>{seatNumber}</Text></Text>
                 <Text style={styles.summaryText}>Sector: <Text style={styles.summaryBold}>{selectedMatch.stadium.sectors.find((s) => s.id === selectedSectorId)?.name}</Text></Text>
-                <Text style={styles.summaryText}>Precio: <Text style={styles.summaryBold}>€{Number(selectedMatch.stadium.sectors.find((s) => s.id === selectedSectorId)?.price).toFixed(2)}</Text></Text>
+                <Text style={styles.summaryText}>Precio: <Text style={styles.summaryBold}>${Number(selectedMatch.stadium.sectors.find((s) => s.id === selectedSectorId)?.price).toFixed(2)}</Text></Text>
               </View>
             )}
 
@@ -398,7 +398,7 @@ export default function StadiumScreen() {
               <View style={styles.cardFooter}>
                 <View>
                   <Text style={styles.priceLabel}>Desde</Text>
-                  <Text style={styles.price}>€{Math.min(...item.stadium.sectors.map((sector) => Number(sector.price))).toFixed(2)}</Text>
+                  <Text style={styles.price}>${Math.min(...item.stadium.sectors.map((sector) => Number(sector.price))).toFixed(2)}</Text>
                 </View>
                 <AppButton label="Ver localidades" onPress={() => chooseMatch(item)} />
               </View>

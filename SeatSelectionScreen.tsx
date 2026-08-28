@@ -163,7 +163,7 @@ export default function SeatSelectionScreen() {
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Total</Text>
-            <Text style={styles.summaryValue}>€{totalPrice.toFixed(2)}</Text>
+            <Text style={styles.summaryValue}>${totalPrice.toFixed(2)}</Text>
           </View>
           <Pressable style={styles.continueButton} onPress={continueToCheckout}>
             <Text style={styles.continueText}>Continuar al pago</Text>

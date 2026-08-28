@@ -34,49 +34,76 @@ async function main() {
 
   const movie1 = await prisma.movieEvent.upsert({
     where: { id: 'movie-1' },
-    update: {},
+    update: {
+      title: 'The Odyssey en 35mm',
+      synopsis: 'Después de la Guerra de Troya, Odiseo enfrenta un peligroso viaje de regreso a Ítaca, encontrándose con Polifemo, las Sirenas y Calipso.',
+      duration: 172,
+      category: MovieCategory.CINE,
+      posterUrl: 'https://www.ochoymedio.net/wp-content/uploads/2026/07/Chang_Odyssey_CT-K020-18.webp',
+      trailerUrl: 'https://www.youtube.com/watch?v=f_bKjZeJBBI',
+      rating: null,
+      status: EventStatus.NOW_SHOWING,
+    },
     create: {
       id: 'movie-1',
-      title: 'La sombra de la luna',
-      synopsis: 'Un thriller emocional situado en la costa.',
-      duration: 112,
+      title: 'The Odyssey en 35mm',
+      synopsis: 'Después de la Guerra de Troya, Odiseo enfrenta un peligroso viaje de regreso a Ítaca, encontrándose con Polifemo, las Sirenas y Calipso.',
+      duration: 172,
       category: MovieCategory.CINE,
-      posterUrl: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c',
-      trailerUrl: 'https://example.com/trailer1',
-      rating: 8.9,
+      posterUrl: 'https://www.ochoymedio.net/wp-content/uploads/2026/07/Chang_Odyssey_CT-K020-18.webp',
+      trailerUrl: 'https://www.youtube.com/watch?v=f_bKjZeJBBI',
+      rating: null,
       status: EventStatus.NOW_SHOWING,
     },
   });
 
   const movie2 = await prisma.movieEvent.upsert({
     where: { id: 'movie-2' },
-    update: {},
+    update: {
+      title: 'El niño probeta',
+      synopsis: 'Susana y Miguel adquieren un tratamiento para elegir las características de su futuro hijo, pero el nacimiento de Francisco despierta dudas en su familia.',
+      duration: 81,
+      category: MovieCategory.CINE,
+      posterUrl: 'https://www.ochoymedio.net/wp-content/uploads/2026/07/FIC26_NinoProbeta-1024x576-1.jpg',
+      trailerUrl: 'https://www.youtube.com/watch?v=kfo0tnvwoh4',
+      rating: null,
+      status: EventStatus.NOW_SHOWING,
+    },
     create: {
       id: 'movie-2',
-      title: 'Sonora de humo',
-      synopsis: 'Una noche de jazz y electrónica en la sala principal.',
-      duration: 95,
-      category: MovieCategory.CONCIERTO,
-      posterUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a',
-      trailerUrl: 'https://example.com/trailer2',
-      rating: 9.1,
+      title: 'El niño probeta',
+      synopsis: 'Susana y Miguel adquieren un tratamiento para elegir las características de su futuro hijo, pero el nacimiento de Francisco despierta dudas en su familia.',
+      duration: 81,
+      category: MovieCategory.CINE,
+      posterUrl: 'https://www.ochoymedio.net/wp-content/uploads/2026/07/FIC26_NinoProbeta-1024x576-1.jpg',
+      trailerUrl: 'https://www.youtube.com/watch?v=kfo0tnvwoh4',
+      rating: null,
       status: EventStatus.NOW_SHOWING,
     },
   });
 
   const movie3 = await prisma.movieEvent.upsert({
     where: { id: 'movie-3' },
-    update: {},
+    update: {
+      title: 'Coyote vs Acme',
+      synopsis: 'Una historia ambientada en el almacén de ACME, el fabricante de todo lo que utilizan los personajes de los Looney Tunes.',
+      duration: 101,
+      category: MovieCategory.CINE,
+      posterUrl: 'https://www.ochoymedio.net/wp-content/uploads/2025/01/Coyote_vs_Acme_Poster_Oficial.webp',
+      trailerUrl: 'https://www.youtube.com/watch?v=DIqJb0LwSho',
+      rating: null,
+      status: EventStatus.NOW_SHOWING,
+    },
     create: {
       id: 'movie-3',
-      title: 'La última línea',
-      synopsis: 'Una pieza contemporánea sobre corrupción y culpa.',
-      duration: 130,
-      category: MovieCategory.TEATRO,
-      posterUrl: 'https://images.unsplash.com/photo-1503095396549-807759245b35',
-      trailerUrl: 'https://example.com/trailer3',
-      rating: 8.7,
-      status: EventStatus.COMING_SOON,
+      title: 'Coyote vs Acme',
+      synopsis: 'Una historia ambientada en el almacén de ACME, el fabricante de todo lo que utilizan los personajes de los Looney Tunes.',
+      duration: 101,
+      category: MovieCategory.CINE,
+      posterUrl: 'https://www.ochoymedio.net/wp-content/uploads/2025/01/Coyote_vs_Acme_Poster_Oficial.webp',
+      trailerUrl: 'https://www.youtube.com/watch?v=DIqJb0LwSho',
+      rating: null,
+      status: EventStatus.NOW_SHOWING,
     },
   });
 
@@ -184,39 +211,39 @@ async function main() {
   // Funciones de cine
   await prisma.showtime.upsert({
     where: { id: 'show-001' },
-    update: {},
+    update: { movieId: movie1.id, roomId: room.id, startTime: new Date('2026-08-29T20:00:00-05:00'), price: 7, availableSeats: 64 },
     create: {
       id: 'show-001',
       movieId: movie1.id,
       roomId: room.id,
-      startTime: new Date(now.getTime() + 1000 * 60 * 60 * 4),
-      price: 16.5,
+      startTime: new Date('2026-08-29T20:00:00-05:00'),
+      price: 7,
       availableSeats: 64,
     },
   });
 
   await prisma.showtime.upsert({
     where: { id: 'show-002' },
-    update: {},
+    update: { movieId: movie2.id, roomId: room.id, startTime: new Date('2026-08-29T18:00:00-05:00'), price: 7, availableSeats: 64 },
     create: {
       id: 'show-002',
       movieId: movie2.id,
       roomId: room.id,
-      startTime: new Date(now.getTime() + 1000 * 60 * 60 * 26),
-      price: 24,
+      startTime: new Date('2026-08-29T18:00:00-05:00'),
+      price: 7,
       availableSeats: 64,
     },
   });
 
   await prisma.showtime.upsert({
     where: { id: 'show-003' },
-    update: {},
+    update: { movieId: movie3.id, roomId: room.id, startTime: new Date('2026-08-29T16:00:00-05:00'), price: 7, availableSeats: 64 },
     create: {
       id: 'show-003',
       movieId: movie3.id,
       roomId: room.id,
-      startTime: new Date(now.getTime() + 1000 * 60 * 60 * 50),
-      price: 18,
+      startTime: new Date('2026-08-29T16:00:00-05:00'),
+      price: 7,
       availableSeats: 64,
     },
   });

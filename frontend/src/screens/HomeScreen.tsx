@@ -149,7 +149,7 @@ export default function HomeScreen() {
               <Text style={styles.meta}>{showtime ? `${formatShowtime(showtime.startTime)} • ${showtime.room.name}` : 'Sin funciones disponibles'}</Text>
               <Text style={styles.synopsis}>{movie.synopsis}</Text>
               <View style={styles.footer}>
-                <Text style={styles.price}>Desde €{price.toFixed(2)}</Text>
+                <Text style={styles.price}>Desde ${price.toFixed(2)}</Text>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Reservar ${movie.title}`}

@@ -172,7 +172,7 @@ export default function HomeScreen() {
               <Text style={styles.movieSynopsis}>{movie.synopsis}</Text>
 
               <View style={styles.movieFooter}>
-                <Text style={styles.moviePrice}>Desde €{movie.price.toFixed(2)}</Text>
+                <Text style={styles.moviePrice}>Desde ${movie.price.toFixed(2)}</Text>
                 <Pressable
                   style={styles.buyButton}
                   onPress={() =>
