@@ -26,6 +26,8 @@ Aplicacion movil para descubrir eventos, seleccionar localidades, reservar entra
 |   +-- src/                 Pantallas, autenticacion, API y tema visual
 +-- scripts/                 Diagnosticos operativos
 +-- SETUP_AND_DEPLOYS.md     Guia detallada de instalacion y despliegue
++-- MANUAL_STARTUP.md        Inicio manual de contenedores y servidores
++-- PROMPTS_AND_SOLUTIONS.md Registro de prompts y soluciones aplicadas
 +-- STADIUMS_ROADMAP.md      Estado del modulo de estadios
 +-- VISUAL_IDENTITY_TICKETSAFE.md
 ```
@@ -38,7 +40,7 @@ Aplicacion movil para descubrir eventos, seleccionar localidades, reservar entra
 - Expo CLI o ejecucion mediante `npx expo`.
 - Android Studio para probar en Android o un dispositivo movil.
 
-## Instalacion
+## Instalacion inicial
 
 Desde la raiz del proyecto:
 
@@ -46,6 +48,8 @@ Desde la raiz del proyecto:
 npm install
 npm install --workspaces
 ```
+
+Para una guia completa de inicio manual en Windows PowerShell, consulta [MANUAL_STARTUP.md](MANUAL_STARTUP.md).
 
 Configura las variables del backend en `backend/.env`:
 
@@ -86,9 +90,10 @@ No uses estas credenciales en produccion.
 
 ## Ejecucion
 
-Inicia la API y la app en terminales separadas:
+Inicia PostgreSQL, la API y Expo en terminales separadas:
 
 ```bash
+npm --workspace backend run db:up
 npm run dev:backend
 npm run dev:frontend
 ```
@@ -153,6 +158,8 @@ npm run ops:check
 
 ## Documentacion adicional
 
+- [Inicio manual de contenedores y servidores](MANUAL_STARTUP.md)
+- [Prompts y soluciones aplicadas](PROMPTS_AND_SOLUTIONS.md)
 - [Guia de setup y despliegue](SETUP_AND_DEPLOYS.md)
 - [Roadmap del modulo de estadios](STADIUMS_ROADMAP.md)
 - [Roadmap general de tareas](TASKS_ROADMAP.md)
