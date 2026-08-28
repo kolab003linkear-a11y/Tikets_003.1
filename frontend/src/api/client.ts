@@ -168,6 +168,25 @@ export type StadiumTicketResponse = {
   ticket: { id: string; qrPayload: string; status: 'VALID' | 'USED' | 'EXPIRED'; seatNumber: string; sector: string; match: StadiumMatch };
 };
 
+export type AdminStadium = {
+  id: string;
+  name: string;
+  city: string;
+  capacity: number;
+  imageUrl?: string | null;
+  sectors: StadiumSector[];
+  _count?: { matches: number };
+};
+
+export type AdminStadiumInput = {
+  name: string;
+  city: string;
+  capacity: number;
+  imageUrl?: string | null;
+  seatLayout: { rows: string[]; columns: number };
+  sectors: Array<{ name: string; code: string; capacity: number; price: number; seatLayout: { rows: string[]; columns: number } }>;
+};
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
@@ -199,6 +218,18 @@ export function createMatchTicket(token: string, matchId: string, sectorId: stri
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify({ sectorId, seatNumber }),
+  });
+}
+
+export function getAdminStadiums(token: string) {
+  return request<{ stadiums: AdminStadium[] }>('/api/admin/stadiums', { headers: { Authorization: `Bearer ${token}` } });
+}
+
+export function createAdminStadium(token: string, stadium: AdminStadiumInput) {
+  return request<{ stadium: AdminStadium }>('/api/admin/stadiums', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(stadium),
   });
 }
 
