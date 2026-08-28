@@ -4,17 +4,33 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  const passwordHash = await bcrypt.hash('demo1234', 12);
+  const adminEmail = 'admin@tikets.com';
+  const adminPassword = 'demo1234';
+  const passwordHash = await bcrypt.hash(adminPassword, 12);
 
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@tiKets.com' },
-    update: {},
-    create: {
-      email: 'admin@tiKets.com',
+    where: { email: adminEmail },
+    update: {
       passwordHash,
       role: UserRole.ADMIN,
     },
+    create: {
+      email: adminEmail,
+      passwordHash,
+      role: UserRole.ADMIN,
+    },
+    select: {
+      id: true,
+      email: true,
+      passwordHash: true,
+      role: true,
+    },
   });
+
+  const adminPasswordValid = await bcrypt.compare(adminPassword, admin.passwordHash);
+  if (!adminPasswordValid) {
+    throw new Error(`Admin seed verification failed for ${admin.email}.`);
+  }
 
   const movie1 = await prisma.movieEvent.upsert({
     where: { id: 'movie-1' },
@@ -259,12 +275,6 @@ async function main() {
     movies: [movie1.title, movie2.title, movie3.title],
     stadiums: ['Quito', 'Guayaquil (Monumental)', 'Guayaquil (Capwell)', 'Ambato'],
     matches: 4,
-  });
-}
-
-  console.log('Seed ok:', {
-    admin: admin.email,
-    movies: [movie1.title, movie2.title, movie3.title],
   });
 }
 

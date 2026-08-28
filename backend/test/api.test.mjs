@@ -115,7 +115,7 @@ test('completes the authenticated reservation lifecycle', async () => {
 
     const adminLoginResponse = await request(baseUrl, '/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email: 'admin@ochoymedio.com', password: 'demo1234' }),
+      body: JSON.stringify({ email: 'admin@tikets.com', password: 'demo1234' }),
     });
     const adminLogin = await adminLoginResponse.json();
     const adminHeaders = { Authorization: `Bearer ${adminLogin.token}` };
@@ -130,6 +130,108 @@ test('completes the authenticated reservation lifecycle', async () => {
     });
     assert.equal(usedResponse.status, 200);
     assert.equal((await usedResponse.json()).status, 'USED');
+  } finally {
+    if (userId) await prisma.user.delete({ where: { id: userId } });
+  }
+});
+
+test('creates and reuses a stadium ticket QR once', async () => {
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+  const email = `stadium-${Date.now()}@example.com`;
+  let userId;
+
+  try {
+    const registerResponse = await request(baseUrl, '/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password: 'demo1234', role: 'CLIENT' }),
+    });
+    assert.equal(registerResponse.status, 201);
+    const registered = await registerResponse.json();
+    userId = registered.user.id;
+
+    const loginResponse = await request(baseUrl, '/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password: 'demo1234' }),
+    });
+    assert.equal(loginResponse.status, 200);
+    const login = await loginResponse.json();
+    const headers = { Authorization: `Bearer ${login.token}` };
+
+    const matchesResponse = await request(baseUrl, '/api/matches');
+    assert.equal(matchesResponse.status, 200);
+    const matches = await matchesResponse.json();
+    const match = matches.matches.find((item) => item.stadium?.sectors?.length > 0 && item.status !== 'FINISHED' && item.status !== 'CANCELLED');
+    assert.ok(match, 'expected an available stadium match');
+
+    const sector = match.stadium.sectors[0];
+    const rows = sector.seatLayout.rows ?? [];
+    const columns = sector.seatLayout.columns ?? 0;
+    const seatNumber = `${rows[0]}1`;
+
+    const ticketResponse = await request(baseUrl, `/api/matches/${match.id}/tickets`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ sectorId: sector.id, seatNumber }),
+    });
+    assert.equal(ticketResponse.status, 201);
+    const ticket = await ticketResponse.json();
+    assert.match(ticket.ticket.qrPayload, /^stadiumsafe:v1:/);
+
+    const adminLoginResponse = await request(baseUrl, '/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: 'admin@tikets.com', password: 'demo1234' }),
+    });
+    assert.equal(adminLoginResponse.status, 200);
+    const adminLogin = await adminLoginResponse.json();
+    const adminHeaders = { Authorization: `Bearer ${adminLogin.token}` };
+
+    const firstValidation = await request(baseUrl, '/api/admin/tickets/validate', {
+      method: 'POST',
+      headers: adminHeaders,
+      body: JSON.stringify({ qrCode: ticket.ticket.qrPayload }),
+    });
+    assert.equal(firstValidation.status, 200);
+    assert.equal((await firstValidation.json()).status, 'USED');
+
+    const secondValidation = await request(baseUrl, '/api/admin/tickets/validate', {
+      method: 'POST',
+      headers: adminHeaders,
+      body: JSON.stringify({ qrCode: ticket.ticket.qrPayload }),
+    });
+    assert.equal(secondValidation.status, 200);
+    assert.equal((await secondValidation.json()).status, 'USED');
+  } finally {
+    if (userId) await prisma.user.delete({ where: { id: userId } });
+  }
+});
+
+test('denies client access to administrative mutations', async () => {
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+  const email = `client-${Date.now()}@example.com`;
+  let userId;
+
+  try {
+    const registerResponse = await request(baseUrl, '/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password: 'demo1234', role: 'CLIENT' }),
+    });
+    assert.equal(registerResponse.status, 201);
+    const registered = await registerResponse.json();
+    userId = registered.user.id;
+
+    const loginResponse = await request(baseUrl, '/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password: 'demo1234' }),
+    });
+    assert.equal(loginResponse.status, 200);
+    const login = await loginResponse.json();
+
+    const adminResponse = await request(baseUrl, '/api/admin/stadiums', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${login.token}` },
+      body: JSON.stringify({}),
+    });
+    assert.equal(adminResponse.status, 403);
   } finally {
     if (userId) await prisma.user.delete({ where: { id: userId } });
   }

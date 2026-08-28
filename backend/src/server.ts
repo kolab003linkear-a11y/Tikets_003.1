@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { Prisma, PrismaClient, ReservationStatus, TicketStatus, UserRole } from '@prisma/client';
+import { Prisma, PrismaClient, ReservationStatus, StadiumTicketStatus, TicketStatus, UserRole } from '@prisma/client';
 import { z } from 'zod';
 import { createHash } from 'crypto';
 import { writeLog } from './logger';
@@ -848,6 +848,72 @@ app.post('/api/admin/tickets/validate', authMiddleware, async (req, res, next) =
     }
 
     const qrCode = payload.qrCode.trim();
+    const stadiumMatches = qrCode.match(/^stadiumsafe:v1:([^:]+):([^:]+)$/i);
+    if (stadiumMatches) {
+      const stadiumTicket = await prisma.stadiumTicket.findUnique({
+        where: { id: stadiumMatches[1] },
+        include: { match: { include: { stadium: true } }, sector: true },
+      });
+
+      if (!stadiumTicket || stadiumTicket.qrCodeHash !== stadiumMatches[2]) {
+        return res.status(404).json({
+          valid: false,
+          status: 'INVALID',
+          message: 'Stadium ticket not found or QR invalid.',
+        });
+      }
+
+      if (stadiumTicket.status === StadiumTicketStatus.USED) {
+        return res.json({
+          valid: false,
+          status: 'USED',
+          message: 'This stadium ticket has already been used.',
+          ticket: {
+            id: stadiumTicket.id,
+            seatNumber: stadiumTicket.seatNumber,
+            usedAt: stadiumTicket.usedAt,
+            matchId: stadiumTicket.matchId,
+            sector: stadiumTicket.sector.name,
+          },
+        });
+      }
+
+      if (stadiumTicket.status === StadiumTicketStatus.EXPIRED) {
+        return res.json({
+          valid: false,
+          status: 'EXPIRED',
+          message: 'This stadium ticket has expired.',
+          ticket: {
+            id: stadiumTicket.id,
+            seatNumber: stadiumTicket.seatNumber,
+            matchId: stadiumTicket.matchId,
+            sector: stadiumTicket.sector.name,
+          },
+        });
+      }
+
+      const updatedStadiumTicket = await prisma.stadiumTicket.update({
+        where: { id: stadiumTicket.id },
+        data: { status: StadiumTicketStatus.USED, usedAt: new Date() },
+        include: { match: { include: { stadium: true } }, sector: true },
+      });
+
+      return res.json({
+        valid: true,
+        status: 'USED',
+        message: 'Stadium ticket validated successfully.',
+        ticket: {
+          id: updatedStadiumTicket.id,
+          seatNumber: updatedStadiumTicket.seatNumber,
+          status: updatedStadiumTicket.status,
+          usedAt: updatedStadiumTicket.usedAt,
+          matchId: updatedStadiumTicket.matchId,
+          sector: updatedStadiumTicket.sector.name,
+          stadium: updatedStadiumTicket.match.stadium.name,
+        },
+      });
+    }
+
     const matches = qrCode.match(/^ticketsafe:v1:([^:]+):([^:]+)$/i);
     const ticketId = matches ? matches[1] : qrCode;
     const expectedHash = matches ? matches[2] : null;
