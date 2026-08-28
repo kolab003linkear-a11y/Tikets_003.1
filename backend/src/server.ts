@@ -14,7 +14,7 @@ dotenv.config();
 const prisma = new PrismaClient();
 const app = express();
 const port = Number(process.env.PORT ?? 4000);
-const jwtSecret = process.env.JWT_SECRET ?? 'ochoymedio-dev-secret';
+const jwtSecret = process.env.JWT_SECRET ?? 'tiKets-dev-secret';
 
 app.use((req, res, next) => {
   const startedAt = Date.now();
@@ -123,7 +123,7 @@ app.use(express.json({ limit: '2mb' }));
 app.get('/api/health', async (_req, res, next) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
-    res.json({ ok: true, service: 'ochoymedio-api', database: 'connected', timestamp: new Date().toISOString() });
+    res.json({ ok: true, service: 'tiKets-api', database: 'connected', timestamp: new Date().toISOString() });
   } catch (error) {
     writeLog('ERROR', 'Database health check failed', error);
     next(new AppError('Database unavailable.', 503));
@@ -883,7 +883,7 @@ export { app, prisma };
 
 if (require.main === module) {
   app.listen(port, () => {
-    const message = `Ochoymedio API running at http://localhost:${port}`;
+    const message = `tiKets API running at http://localhost:${port}`;
     console.log(message);
     writeLog('INFO', message);
     prisma.$connect()

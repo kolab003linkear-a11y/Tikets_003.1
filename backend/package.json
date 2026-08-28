@@ -1,5 +1,5 @@
 {
-  "name": "ochoymedio-backend",
+  "name": "tiKets-backend",
   "version": "1.0.0",
   "private": true,
   "main": "dist/server.js",

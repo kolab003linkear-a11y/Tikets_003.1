@@ -1,4 +1,4 @@
-# Ochoymedio: documento de tareas
+# tiKets: documento de tareas
 
 Este documento organiza la evolución de la aplicación por fases. Cada fase debe validarse antes de comenzar la siguiente.
 

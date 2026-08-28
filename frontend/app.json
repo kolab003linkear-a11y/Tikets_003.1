@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Ochoymedio",
-    "slug": "ochoymedio-mobile",
+    "name": "tiKets",
+    "slug": "tiKets-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",

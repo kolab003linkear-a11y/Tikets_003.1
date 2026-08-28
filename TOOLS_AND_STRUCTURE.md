@@ -1,4 +1,4 @@
-# Ochoymedio: herramientas y estructura
+# tiKets: herramientas y estructura
 
 ## Herramientas usadas
 

@@ -42,7 +42,7 @@ export default function AuthScreen() {
       <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.brandMark}><Text style={styles.brandMarkText}>OM</Text></View>
         <Text style={styles.overline}>Centro cultural</Text>
-        <Text style={styles.title}>Ochoymedio</Text>
+        <Text style={styles.title}>tiKets</Text>
         <Text style={styles.subtitle}>{registerMode ? 'Crea tu cuenta para reservar tus entradas.' : 'Inicia sesión para continuar.'}</Text>
 
         <AppCard style={styles.form}>

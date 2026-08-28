@@ -1,4 +1,4 @@
-# Ochoymedio — Setup y despliegue
+# tiKets — Setup y despliegue
 
 ## 1. Prerrequisitos
 
@@ -46,7 +46,7 @@ Ejecuta los comandos siguientes desde la raíz del workspace, salvo cuando se in
 Crea un archivo `.env` dentro del backend con este contenido:
 
 ```env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/ochoymedio?schema=public"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/tiKets?schema=public"
 PORT=4000
 JWT_SECRET="cambia-esta-clave-por-una-segura"
 STRIPE_SECRET_KEY="sk_test_xxx"
@@ -57,7 +57,7 @@ PAYPHONE_WEBHOOK_SECRET="your_webhook_secret"
 Crea también un archivo `.env.example` con el mismo formato para documentar la configuración:
 
 ```env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/ochoymedio?schema=public"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/tiKets?schema=public"
 PORT=4000
 JWT_SECRET="replace-with-a-secure-secret"
 STRIPE_SECRET_KEY="sk_test_xxx"
@@ -83,7 +83,7 @@ El `package.json` y `tsconfig.json` ya incluyen los scripts y dependencias neces
 Levanta PostgreSQL local:
 
 ```bash
-docker run --name ochoymedio-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=ochoymedio -p 5432:5432 -d postgres:16
+docker run --name tiKets-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=tiKets -p 5432:5432 -d postgres:16
 ```
 
 Luego inicializa Prisma:
@@ -96,7 +96,7 @@ Después de iniciar Docker Desktop, ejecuta:
 
 ```bash
 npm run db:up
-npm run prisma:migrate -- --name init_ochoymedio
+npm run prisma:migrate -- --name init_tiKets
 npm run prisma:seed
 ```
 
@@ -116,10 +116,10 @@ async function main() {
   const passwordHash = await bcrypt.hash('demo1234', 12);
 
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@ochoymedio.com' },
+    where: { email: 'admin@tiKets.com' },
     update: {},
     create: {
-      email: 'admin@ochoymedio.com',
+      email: 'admin@tiKets.com',
       passwordHash,
       role: UserRole.ADMIN,
     },
@@ -240,7 +240,7 @@ Asegúrate de tener la app mobile con el siguiente `package.json`:
 
 ```json
 {
-  "name": "ochoymedio-mobile",
+  "name": "tiKets-mobile",
   "private": true,
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {

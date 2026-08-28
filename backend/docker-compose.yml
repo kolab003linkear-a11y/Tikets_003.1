@@ -1,14 +1,14 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: ochoymedio-postgres
+    container_name: tiKets-postgres
     restart: unless-stopped
     ports:
       - '5432:5432'
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: ochoymedio
+      POSTGRES_DB: tiKets
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

@@ -3,8 +3,8 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { AuthUser, getMe, login, register, updateMe } from '../api/client';
 
-const TOKEN_KEY = 'ochoymedio.auth.token';
-const USER_KEY = 'ochoymedio.auth.user';
+const TOKEN_KEY = 'tiKets.auth.token';
+const USER_KEY = 'tiKets.auth.user';
 
 const isWeb = Platform.OS === 'web';
 

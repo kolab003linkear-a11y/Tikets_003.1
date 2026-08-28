@@ -13,7 +13,7 @@ dotenv.config();
 const prisma = new PrismaClient();
 const app = express();
 const PORT = Number(process.env.PORT ?? 4000);
-const JWT_SECRET = process.env.JWT_SECRET ?? 'ochoymedio-dev-secret';
+const JWT_SECRET = process.env.JWT_SECRET ?? 'tiKets-dev-secret';
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -78,7 +78,7 @@ app.use(helmet());
 app.use(express.json({ limit: '2mb' }));
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'ochoymedio-api', time: new Date().toISOString() });
+  res.json({ ok: true, service: 'tiKets-api', time: new Date().toISOString() });
 });
 
 app.post('/api/auth/register', async (req: Request, res: Response, next: NextFunction) => {
@@ -341,5 +341,5 @@ app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Ochoymedio API running on http://localhost:${PORT}`);
+  console.log(`tiKets API running on http://localhost:${PORT}`);
 });

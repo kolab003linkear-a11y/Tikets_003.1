@@ -72,7 +72,7 @@ export default function HomeScreen() {
         <View style={styles.headerRow}>
           <View>
             <Text style={styles.overline}>Centro cultural</Text>
-            <Text style={styles.title}>Ochoymedio</Text>
+            <Text style={styles.title}>tiKets</Text>
           </View>
           <Pressable accessibilityRole="button" accessibilityLabel="Abrir perfil" style={styles.avatar}>
             <Text style={styles.avatarText}>OM</Text>
