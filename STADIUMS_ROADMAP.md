@@ -4,11 +4,11 @@ Este documento organiza la construcción del módulo de entradas para partidos e
 
 ## Estado
 
-- [ ] Fase 1: Modelo y catálogo de estadios
-- [ ] Fase 2: Gestión administrativa
-- [ ] Fase 3: Partidos y disponibilidad
-- [ ] Fase 4: Compra y tickets QR
-- [ ] Fase 5: Experiencia móvil
+- [x] Fase 1: Modelo y catálogo de estadios
+- [x] Fase 2: Gestión administrativa
+- [x] Fase 3: Partidos y disponibilidad
+- [x] Fase 4: Compra y tickets QR
+- [x] Fase 5: Experiencia móvil
 - [ ] Fase 6: Calidad y despliegue
 
 ## Fase 1: Modelo y catálogo de estadios
